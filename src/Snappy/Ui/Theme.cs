@@ -9,6 +9,9 @@ internal static class Theme
     const string PersonalizeKey = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
     static ResourceDictionary? s_palette;
 
+    /// <summary>Whether the dark palette is active.</summary>
+    public static bool IsDark { get; private set; }
+
     public static void FollowSystem(ResourceDictionary resources)
     {
         Apply(resources);
@@ -21,16 +24,17 @@ internal static class Theme
 
     static void Apply(ResourceDictionary resources)
     {
+        IsDark = SystemPrefersDark();
         var palette = new ResourceDictionary
         {
-            Source = new Uri($"pack://application:,,,/Themes/{(IsDark() ? "Dark" : "Light")}.xaml"),
+            Source = new Uri($"pack://application:,,,/Themes/{(IsDark ? "Dark" : "Light")}.xaml"),
         };
         if (s_palette is not null) resources.MergedDictionaries.Remove(s_palette);
         resources.MergedDictionaries.Insert(0, palette);
         s_palette = palette;
     }
 
-    static bool IsDark()
+    static bool SystemPrefersDark()
     {
         try
         {

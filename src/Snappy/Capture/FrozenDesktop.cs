@@ -41,6 +41,30 @@ public sealed class FrozenDesktop(BitmapSource image, PhysicalRect bounds, IRead
         return Color.FromRgb(pixel[2], pixel[1], pixel[0]);
     }
 
+    /// <summary>
+    /// Average brightness of part of the snapshot, from 0 (black) to 1 (white), using Rec. 709
+    /// luma weights and sampling every <paramref name="step"/>th pixel. 0 when nothing of
+    /// <paramref name="rect"/> is on the desktop.
+    /// </summary>
+    public double MeanLuminance(PhysicalRect rect, int step = 4)
+    {
+        if (ToImageRect(Bounds, rect) is not { } source) return 0;
+        int stride = source.Width * 4;
+        var pixels = new byte[stride * source.Height];
+        Image.CopyPixels(source, pixels, stride, 0);
+
+        double sum = 0;
+        int count = 0;
+        for (int y = 0; y < source.Height; y += step)
+        for (int x = 0; x < source.Width; x += step)
+        {
+            int i = y * stride + x * 4;
+            sum += 0.0722 * pixels[i] + 0.7152 * pixels[i + 1] + 0.2126 * pixels[i + 2];
+            count++;
+        }
+        return sum / count / 255;
+    }
+
     /// <summary>A live view of part of the snapshot, for display (no pixel copy).</summary>
     public BitmapSource View(PhysicalRect rect)
     {

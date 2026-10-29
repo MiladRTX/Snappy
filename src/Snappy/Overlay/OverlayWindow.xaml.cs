@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
 using Snappy.Capture;
 using Snappy.Geometry;
 using Snappy.Interop;
@@ -17,9 +18,10 @@ namespace Snappy.Overlay;
 internal partial class OverlayWindow : Window
 {
     const double SegmentWidth = 120;
-    const double InactiveSegmentOpacity = 0.6;
+    const double InactiveSegmentOpacity = 0.65;
+    const double MinimumGlassTint = 0.55;
     const double HoveredSegmentOpacity = 0.85;
-    const double ToolbarRadius = 14;
+    const double ToolbarRadius = 16;
     const double DimOpacity = 0.5;
     const int LoupeRadius = 7; // the magnifier shows 15 x 15 pixels
 
@@ -43,6 +45,7 @@ internal partial class OverlayWindow : Window
         Frozen.Source = session.Desktop.View(monitor.Bounds);
         LoupeBrush.ImageSource = session.Desktop.Image;
         FrostBrush.ImageSource = Frozen.Source;
+        HintFrostBrush.ImageSource = Frozen.Source;
         Dim.Data = new GeometryGroup { FillRule = FillRule.EvenOdd, Children = { _dimOuter, _dimHole } };
         OnModeChanged(session.Mode, animate: false);
         WindowPlacement.Pin(this, monitor.Bounds, topmost: true, cloakUntilRendered: true);
@@ -50,6 +53,11 @@ internal partial class OverlayWindow : Window
         // Laid out (still transparent) from the start, so the glass can be aimed before it slides in.
         if (hostsToolbar) Toolbar.Visibility = Visibility.Visible;
         Frost.SizeChanged += (_, e) => Frost.Clip = new RectangleGeometry(new Rect(e.NewSize), ToolbarRadius, ToolbarRadius);
+        HintFrost.SizeChanged += (_, e) =>
+            HintFrost.Clip = new RectangleGeometry(new Rect(e.NewSize), e.NewSize.Height / 2, e.NewSize.Height / 2);
+        // The hint pill changes width with the mode; re-aim once layout has settled.
+        FrostImage.SizeChanged += (_, _) => Dispatcher.InvokeAsync(AimGlass, DispatcherPriority.Loaded);
+        HintFrostImage.SizeChanged += (_, _) => Dispatcher.InvokeAsync(AimGlass, DispatcherPriority.Loaded);
         foreach (var (button, _) in Segments)
         {
             button.MouseEnter += (_, _) => FadeSegment(button, HoveredSegmentOpacity);
@@ -181,19 +189,34 @@ internal partial class OverlayWindow : Window
         // The frozen image matches the real screen, so this reads as the screen itself dimming.
         Dim.BeginAnimation(OpacityProperty, Motion.Enter(0, DimOpacity, 240));
         if (!_hostsToolbar) return;
-        AimFrost();
+        AimGlass();
         Toolbar.BeginAnimation(OpacityProperty, Motion.Enter(0, 1, 260));
         ToolbarShift.BeginAnimation(TranslateTransform.YProperty, Motion.Enter(-16, 0, 480));
     }
 
-    /// <summary>Points the frosted-glass layer at the part of the frozen screen behind the toolbar.</summary>
-    void AimFrost()
+    /// <summary>Points each glass panel's blur at the part of the frozen screen behind it.</summary>
+    void AimGlass()
+    {
+        AimFrost(FrostImage, FrostBrush, ToolbarTint);
+        AimFrost(HintFrostImage, HintFrostBrush, HintTint);
+    }
+
+    void AimFrost(FrameworkElement area, ImageBrush brush, UIElement tint)
     {
         // Where the toolbar comes to rest, not where the slide-in starts.
-        var topLeft = FrostImage.TranslatePoint(new Point(0, 0), this);
+        var topLeft = area.TranslatePoint(new Point(0, 0), this);
         topLeft.Y -= ToolbarShift.Y;
         double scale = Scale;
-        FrostBrush.Viewbox = new Rect(topLeft.X * scale, topLeft.Y * scale, FrostImage.ActualWidth * scale, FrostImage.ActualHeight * scale);
+        var behind = new Rect(topLeft.X * scale, topLeft.Y * scale, area.ActualWidth * scale, area.ActualHeight * scale);
+        brush.Viewbox = behind;
+
+        // Adaptive tint, like macOS vibrancy: thin over content that already contrasts with the
+        // text, so the glass stays see-through, and thicker over content that doesn't (bright
+        // windows in the dark theme, dark ones in the light theme), so the text stays readable.
+        double luminance = _session.Desktop.MeanLuminance(new PhysicalRect(
+            Monitor.Bounds.X + (int)behind.X, Monitor.Bounds.Y + (int)behind.Y, (int)behind.Width, (int)behind.Height));
+        double glare = Theme.IsDark ? luminance : 1 - luminance;
+        tint.Opacity = MinimumGlassTint + (1 - MinimumGlassTint) * glare;
     }
 
     void FadeSegment(RadioButton button, double opacity)

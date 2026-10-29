@@ -15,11 +15,6 @@
         <GradientStop Offset="0" Color="#1E1E22" />
         <GradientStop Offset="1" Color="#151518" />
     </LinearGradientBrush>
-    <!-- The same surface, translucent, for laying over a frosted backdrop. -->
-    <LinearGradientBrush x:Key="Snappy.SurfaceGlass" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#D91E1E22" />
-        <GradientStop Offset="1" Color="#E8151518" />
-    </LinearGradientBrush>
     <!-- 1px rim, brightest along the top edge. -->
     <LinearGradientBrush x:Key="Snappy.SurfaceEdge" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Offset="0" Color="#33FFFFFF" />
@@ -27,18 +22,38 @@
         <GradientStop Offset="1" Color="#0DFFFFFF" />
     </LinearGradientBrush>
 
-    <!-- Active segment: a raised key. -->
+    <!--
+        Glass (toolbar and hint): a dark tint over the blurred screen, a soft sheen across the top
+        and a light rim. The tint is at full strength over white windows and thins out over dark
+        content (see OverlayWindow.AimFrost).
+    -->
+    <LinearGradientBrush x:Key="Snappy.GlassTint" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#C71C1C21" />
+        <GradientStop Offset="1" Color="#D9121215" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Snappy.GlassSheen" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#1AFFFFFF" />
+        <GradientStop Offset="0.6" Color="#00FFFFFF" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Snappy.GlassEdge" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#66FFFFFF" />
+        <GradientStop Offset="0.35" Color="#1FFFFFFF" />
+        <GradientStop Offset="1" Color="#2EFFFFFF" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="Snappy.GlassMutedForeground" Color="#D4D4D8" />
+
+    <!-- Active segment: a brighter pane of glass. -->
     <LinearGradientBrush x:Key="Snappy.SegmentActive" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#3A3A41" />
-        <GradientStop Offset="1" Color="#2C2C32" />
+        <GradientStop Offset="0" Color="#33FFFFFF" />
+        <GradientStop Offset="1" Color="#1AFFFFFF" />
     </LinearGradientBrush>
     <LinearGradientBrush x:Key="Snappy.SegmentActiveEdge" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#2EFFFFFF" />
-        <GradientStop Offset="1" Color="#08FFFFFF" />
+        <GradientStop Offset="0" Color="#66FFFFFF" />
+        <GradientStop Offset="1" Color="#14FFFFFF" />
     </LinearGradientBrush>
     <SolidColorBrush x:Key="Snappy.SegmentHover" Color="#12FFFFFF" />
 
-    <SolidColorBrush x:Key="Snappy.KbdBackground" Color="#14FFFFFF" />
-    <SolidColorBrush x:Key="Snappy.KbdBorder" Color="#1FFFFFFF" />
+    <SolidColorBrush x:Key="Snappy.KbdBackground" Color="#1AFFFFFF" />
+    <SolidColorBrush x:Key="Snappy.KbdBorder" Color="#29FFFFFF" />
     <SolidColorBrush x:Key="Snappy.Divider" Color="#1AFFFFFF" />
 </ResourceDictionary>

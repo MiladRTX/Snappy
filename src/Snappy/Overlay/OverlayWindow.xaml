@@ -14,6 +14,27 @@
         FontFamily="{DynamicResource Snappy.Font}"
         Foreground="{DynamicResource Snappy.Foreground}"
         Cursor="Cross">
+    <Window.Resources>
+        <!-- The layers of a glass panel, front to back: rim, sheen, tint, blurred screen, base. -->
+        <Style x:Key="GlassBase" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource Snappy.Surface}" />
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="44" ShadowDepth="14" Direction="270" Opacity="0.45" Color="Black" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="GlassBlur" TargetType="Rectangle">
+            <!-- Larger than the panel so the blur has real pixels to sample at the edges. -->
+            <Setter Property="Margin" Value="-40" />
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <BlurEffect Radius="40" KernelType="Gaussian" RenderingBias="Quality" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
     <Grid>
         <!-- This display's slice of the frozen desktop, one image pixel per screen pixel. -->
         <Image x:Name="Frozen" Stretch="Fill" RenderOptions.BitmapScalingMode="NearestNeighbor" />
@@ -85,31 +106,19 @@
                 <TranslateTransform x:Name="ToolbarShift" Y="-16" />
             </StackPanel.RenderTransform>
 
+            <!-- Glass panel holding the mode switcher. -->
             <Grid>
-                <Border CornerRadius="14" Background="{DynamicResource Snappy.Surface}">
-                    <Border.Effect>
-                        <DropShadowEffect BlurRadius="48" ShadowDepth="16" Direction="270" Opacity="0.5" Color="Black" />
-                    </Border.Effect>
-                </Border>
-                <!--
-                    Frosted glass: a blurred copy of the frozen screen behind the toolbar, at half
-                    strength like the dimmed screen around it, so it stays dark over bright windows.
-                -->
-                <Grid x:Name="Frost" Opacity="0.5">
-                    <Rectangle x:Name="FrostImage" Margin="-32">
+                <Border CornerRadius="16" Style="{StaticResource GlassBase}" />
+                <Grid x:Name="Frost" Opacity="0.7">
+                    <Rectangle x:Name="FrostImage" Style="{StaticResource GlassBlur}">
                         <Rectangle.Fill>
                             <ImageBrush x:Name="FrostBrush" ViewboxUnits="Absolute" Stretch="Fill" />
                         </Rectangle.Fill>
-                        <Rectangle.Effect>
-                            <BlurEffect Radius="32" KernelType="Gaussian" RenderingBias="Quality" />
-                        </Rectangle.Effect>
                     </Rectangle>
                 </Grid>
-                <Border Padding="5"
-                        CornerRadius="14"
-                        BorderThickness="1"
-                        Background="{DynamicResource Snappy.SurfaceGlass}"
-                        BorderBrush="{DynamicResource Snappy.SurfaceEdge}">
+                <Border x:Name="ToolbarTint" CornerRadius="16" Background="{DynamicResource Snappy.GlassTint}" />
+                <Border CornerRadius="16" Background="{DynamicResource Snappy.GlassSheen}" />
+                <Border Padding="5" CornerRadius="16" BorderThickness="1" BorderBrush="{DynamicResource Snappy.GlassEdge}">
                     <StackPanel Orientation="Horizontal">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -118,12 +127,12 @@
                                 <ColumnDefinition Width="120" />
                             </Grid.ColumnDefinitions>
                             <Border x:Name="SegmentPill"
-                                    CornerRadius="8"
+                                    CornerRadius="10"
                                     BorderThickness="1"
                                     Background="{DynamicResource Snappy.SegmentActive}"
                                     BorderBrush="{DynamicResource Snappy.SegmentActiveEdge}">
                                 <Border.Effect>
-                                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Direction="270" Opacity="0.35" Color="Black" />
+                                    <DropShadowEffect BlurRadius="12" ShadowDepth="2" Direction="270" Opacity="0.3" Color="Black" />
                                 </Border.Effect>
                                 <Border.RenderTransform>
                                     <TranslateTransform x:Name="PillShift" />
@@ -177,48 +186,60 @@
                 </Border>
             </Grid>
 
-            <!-- What to do next in the current mode. -->
-            <Border Margin="0,12,0,0"
-                    Padding="12,6"
-                    HorizontalAlignment="Center"
-                    CornerRadius="999"
-                    BorderThickness="1"
-                    Background="{DynamicResource Snappy.SurfaceGlass}"
-                    BorderBrush="{DynamicResource Snappy.SurfaceEdge}"
-                    TextElement.FontSize="12"
-                    TextElement.Foreground="{DynamicResource Snappy.MutedForeground}">
-                <Grid>
-                    <StackPanel x:Name="RegionHint" Orientation="Horizontal">
-                        <TextBlock VerticalAlignment="Center" Text="Drag to capture an area" />
-                        <Ellipse Style="{StaticResource Snappy.Dot}" />
-                        <Border Style="{StaticResource Snappy.Kbd}">
-                            <TextBlock Style="{StaticResource Snappy.KbdText}" Text="Esc" />
-                        </Border>
-                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="to cancel" />
-                    </StackPanel>
-                    <StackPanel x:Name="WindowHint" Orientation="Horizontal" Visibility="Collapsed">
-                        <TextBlock VerticalAlignment="Center" Text="Click a window to capture it" />
-                        <Ellipse Style="{StaticResource Snappy.Dot}" />
-                        <Border Style="{StaticResource Snappy.Kbd}">
-                            <TextBlock Style="{StaticResource Snappy.KbdText}" Text="Esc" />
-                        </Border>
-                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="to cancel" />
-                    </StackPanel>
-                    <StackPanel x:Name="ScreenHint" Orientation="Horizontal" Visibility="Collapsed">
-                        <TextBlock VerticalAlignment="Center" Text="Click a display" />
-                        <Ellipse Style="{StaticResource Snappy.Dot}" />
-                        <Border Style="{StaticResource Snappy.Kbd}">
-                            <TextBlock Style="{StaticResource Snappy.KbdText}" Text="Enter" />
-                        </Border>
-                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="all displays" />
-                        <Ellipse Style="{StaticResource Snappy.Dot}" />
-                        <Border Style="{StaticResource Snappy.Kbd}">
-                            <TextBlock Style="{StaticResource Snappy.KbdText}" Text="Esc" />
-                        </Border>
-                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="to cancel" />
-                    </StackPanel>
+            <!--
+                What to do next in the current mode: a smaller glass pill. Its height is fixed and
+                its corner radius is exactly half of it; WPF bends larger radii into ovals.
+            -->
+            <Grid Height="32" Margin="0,12,0,0" HorizontalAlignment="Center">
+                <Border CornerRadius="16" Style="{StaticResource GlassBase}" />
+                <Grid x:Name="HintFrost" Opacity="0.7">
+                    <Rectangle x:Name="HintFrostImage" Style="{StaticResource GlassBlur}">
+                        <Rectangle.Fill>
+                            <ImageBrush x:Name="HintFrostBrush" ViewboxUnits="Absolute" Stretch="Fill" />
+                        </Rectangle.Fill>
+                    </Rectangle>
                 </Grid>
-            </Border>
+                <Border x:Name="HintTint" CornerRadius="16" Background="{DynamicResource Snappy.GlassTint}" />
+                <Border CornerRadius="16" Background="{DynamicResource Snappy.GlassSheen}" />
+                <Border Padding="14,0"
+                        CornerRadius="16"
+                        BorderThickness="1"
+                        BorderBrush="{DynamicResource Snappy.GlassEdge}"
+                        TextElement.FontSize="12"
+                        TextElement.Foreground="{DynamicResource Snappy.GlassMutedForeground}">
+                    <Grid VerticalAlignment="Center">
+                        <StackPanel x:Name="RegionHint" Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center" Text="Drag to capture an area" />
+                            <Ellipse Style="{StaticResource Snappy.Dot}" />
+                            <Border Style="{StaticResource Snappy.Kbd}">
+                                <TextBlock Style="{StaticResource Snappy.KbdText}" Text="Esc" />
+                            </Border>
+                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="to cancel" />
+                        </StackPanel>
+                        <StackPanel x:Name="WindowHint" Orientation="Horizontal" Visibility="Collapsed">
+                            <TextBlock VerticalAlignment="Center" Text="Click a window to capture it" />
+                            <Ellipse Style="{StaticResource Snappy.Dot}" />
+                            <Border Style="{StaticResource Snappy.Kbd}">
+                                <TextBlock Style="{StaticResource Snappy.KbdText}" Text="Esc" />
+                            </Border>
+                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="to cancel" />
+                        </StackPanel>
+                        <StackPanel x:Name="ScreenHint" Orientation="Horizontal" Visibility="Collapsed">
+                            <TextBlock VerticalAlignment="Center" Text="Click a display" />
+                            <Ellipse Style="{StaticResource Snappy.Dot}" />
+                            <Border Style="{StaticResource Snappy.Kbd}">
+                                <TextBlock Style="{StaticResource Snappy.KbdText}" Text="Enter" />
+                            </Border>
+                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="all displays" />
+                            <Ellipse Style="{StaticResource Snappy.Dot}" />
+                            <Border Style="{StaticResource Snappy.Kbd}">
+                                <TextBlock Style="{StaticResource Snappy.KbdText}" Text="Esc" />
+                            </Border>
+                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="to cancel" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
         </StackPanel>
     </Grid>
 </Window>
