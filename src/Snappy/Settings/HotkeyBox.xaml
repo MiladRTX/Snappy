@@ -1,0 +1,36 @@
+<UserControl x:Class="Snappy.Settings.HotkeyBox"
+             x:ClassModifier="internal"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:Snappy.Ui"
+             Focusable="True"
+             FocusVisualStyle="{x:Null}"
+             Cursor="Hand">
+    <!-- Click to record a shortcut; shows it as key chips. -->
+    <Border x:Name="Frame"
+            Width="210"
+            Height="34"
+            Padding="6,0,4,0"
+            CornerRadius="8"
+            BorderThickness="1"
+            Background="{DynamicResource Snappy.KbdBackground}">
+        <DockPanel>
+            <Button x:Name="ClearButton"
+                    Width="24"
+                    Height="24"
+                    DockPanel.Dock="Right"
+                    Style="{StaticResource Snappy.IconButton}"
+                    Click="OnClearClick">
+                <ui:FaIcon Width="10" Height="10" Glyph="{StaticResource Fa.Xmark}" />
+            </Button>
+            <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                <StackPanel x:Name="Keys" Orientation="Horizontal" />
+                <TextBlock x:Name="Placeholder"
+                           Margin="4,0"
+                           VerticalAlignment="Center"
+                           FontSize="12.5"
+                           Foreground="{DynamicResource Snappy.MutedForeground}" />
+            </StackPanel>
+        </DockPanel>
+    </Border>
+</UserControl>

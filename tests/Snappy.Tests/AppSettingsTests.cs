@@ -1,4 +1,5 @@
 using System.IO;
+using Snappy.Hotkeys;
 using Snappy.Settings;
 
 namespace Snappy.Tests;
@@ -36,14 +37,69 @@ public sealed class AppSettingsTests : IDisposable
     }
 
     [Fact]
-    public void Parse_replaces_blank_values_with_defaults()
+    public void Parse_replaces_blank_paths_with_defaults()
     {
-        var settings = AppSettings.Parse("""{ "hotkey": "", "saveFolder": null, "fileNamePattern": "  " }""");
+        var settings = AppSettings.Parse("""{ "saveFolder": null, "fileNamePattern": "  " }""");
         var defaults = new AppSettings();
 
-        Assert.Equal(defaults.Hotkey, settings.Hotkey);
         Assert.Equal(defaults.SaveFolder, settings.SaveFolder);
         Assert.Equal(defaults.FileNamePattern, settings.FileNamePattern);
+    }
+
+    [Fact]
+    public void A_blank_shortcut_means_off_but_a_missing_one_gets_the_default()
+    {
+        Assert.Equal("", AppSettings.Parse("""{ "hotkey": "" }""").Hotkey);
+        Assert.Equal("", AppSettings.Parse("""{ "hotkey": null }""").Hotkey);
+        Assert.Equal("Ctrl+Shift+S", AppSettings.Parse("{}").Hotkey);
+    }
+
+    [Fact]
+    public void Only_the_region_shortcut_is_on_by_default()
+    {
+        var settings = new AppSettings();
+
+        Assert.Equal("Ctrl+Shift+S", settings.HotkeyFor(HotkeyAction.CaptureRegion));
+        Assert.Equal("", settings.HotkeyFor(HotkeyAction.CaptureWindow));
+        Assert.Equal("", settings.HotkeyFor(HotkeyAction.CaptureScreen));
+        Assert.Equal("", settings.HotkeyFor(HotkeyAction.CaptureAllDisplays));
+    }
+
+    [Theory]
+    [InlineData(HotkeyAction.CaptureRegion, "\"hotkey\"")]
+    [InlineData(HotkeyAction.CaptureWindow, "\"windowHotkey\"")]
+    [InlineData(HotkeyAction.CaptureScreen, "\"screenHotkey\"")]
+    [InlineData(HotkeyAction.CaptureAllDisplays, "\"allDisplaysHotkey\"")]
+    public void Each_shortcut_is_stored_under_its_own_name(HotkeyAction action, string jsonName)
+    {
+        var settings = new AppSettings();
+
+        settings.SetHotkey(action, "Ctrl+Alt+F7");
+
+        Assert.Equal("Ctrl+Alt+F7", settings.HotkeyFor(action));
+        Assert.Contains($"{jsonName}: \"Ctrl+Alt+F7\"", settings.ToJson());
+    }
+
+    [Theory]
+    [InlineData("dark", "Dark")]
+    [InlineData(" LIGHT ", "Light")]
+    [InlineData("System", "System")]
+    [InlineData("purple", "System")]
+    [InlineData("", "System")]
+    public void Theme_is_normalized(string stored, string expected)
+    {
+        Assert.Equal(expected, AppSettings.Parse($$"""{ "theme": "{{stored}}" }""").Theme);
+    }
+
+    [Fact]
+    public void Clone_is_independent()
+    {
+        var original = new AppSettings { WindowHotkey = "Ctrl+Alt+W" };
+
+        var copy = original.Clone();
+        copy.WindowHotkey = "Ctrl+Alt+Q";
+
+        Assert.Equal("Ctrl+Alt+W", original.WindowHotkey);
     }
 
     [Fact]

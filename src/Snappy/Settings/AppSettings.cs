@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using Snappy.Hotkeys;
 
 namespace Snappy.Settings;
 
@@ -18,8 +19,19 @@ public sealed class AppSettings
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
-    /// <summary>Global shortcut that starts a capture, e.g. "Ctrl+Shift+S".</summary>
+    static readonly string[] Themes = ["System", "Light", "Dark"];
+
+    /// <summary>Global shortcut for a region capture, e.g. "Ctrl+Shift+S". Empty turns it off.</summary>
     public string Hotkey { get; set; } = "Ctrl+Shift+S";
+
+    /// <summary>Global shortcut for a window capture. Off (empty) unless set.</summary>
+    public string WindowHotkey { get; set; } = "";
+
+    /// <summary>Global shortcut for a display capture. Off (empty) unless set.</summary>
+    public string ScreenHotkey { get; set; } = "";
+
+    /// <summary>Global shortcut that captures all displays at once. Off (empty) unless set.</summary>
+    public string AllDisplaysHotkey { get; set; } = "";
 
     /// <summary>Where captures are saved. Environment variables such as %USERPROFILE% are expanded.</summary>
     public string SaveFolder { get; set; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "Snappy");
@@ -31,11 +43,35 @@ public sealed class AppSettings
     public bool CopyToClipboard { get; set; } = true;
     public bool ShowNotification { get; set; } = true;
 
+    /// <summary>"System" (follow Windows), "Light" or "Dark".</summary>
+    public string Theme { get; set; } = "System";
+
     public static string DefaultPath { get; } =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Snappy", "settings.json");
 
+    public string HotkeyFor(HotkeyAction action) => action switch
+    {
+        HotkeyAction.CaptureRegion => Hotkey,
+        HotkeyAction.CaptureWindow => WindowHotkey,
+        HotkeyAction.CaptureScreen => ScreenHotkey,
+        _ => AllDisplaysHotkey,
+    };
+
+    public void SetHotkey(HotkeyAction action, string gesture)
+    {
+        switch (action)
+        {
+            case HotkeyAction.CaptureRegion: Hotkey = gesture; break;
+            case HotkeyAction.CaptureWindow: WindowHotkey = gesture; break;
+            case HotkeyAction.CaptureScreen: ScreenHotkey = gesture; break;
+            default: AllDisplaysHotkey = gesture; break;
+        }
+    }
+
+    public AppSettings Clone() => Parse(ToJson());
+
     public static AppSettings Parse(string json) =>
-        (JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings()).WithDefaultsForBlanks();
+        (JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings()).Normalized();
 
     public string ToJson() => JsonSerializer.Serialize(this, JsonOptions);
 
@@ -62,12 +98,20 @@ public sealed class AppSettings
         }
     }
 
-    AppSettings WithDefaultsForBlanks()
+    /// <summary>
+    /// Missing or blank paths fall back to the defaults; a blank shortcut stays blank (it means
+    /// "off"); an unknown theme becomes "System".
+    /// </summary>
+    AppSettings Normalized()
     {
         var defaults = new AppSettings();
-        if (string.IsNullOrWhiteSpace(Hotkey)) Hotkey = defaults.Hotkey;
+        Hotkey ??= "";
+        WindowHotkey ??= "";
+        ScreenHotkey ??= "";
+        AllDisplaysHotkey ??= "";
         if (string.IsNullOrWhiteSpace(SaveFolder)) SaveFolder = defaults.SaveFolder;
         if (string.IsNullOrWhiteSpace(FileNamePattern)) FileNamePattern = defaults.FileNamePattern;
+        Theme = Themes.FirstOrDefault(t => t.Equals(Theme?.Trim(), StringComparison.OrdinalIgnoreCase)) ?? "System";
         return this;
     }
 }

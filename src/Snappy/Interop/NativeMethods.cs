@@ -65,6 +65,26 @@ internal static unsafe partial class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool GdiFlush();
 
+    public const int VREFRESH = 116;
+
+    [LibraryImport("gdi32.dll")]
+    public static partial int GetDeviceCaps(nint hdc, int index);
+
+    /// <summary>The main display's refresh rate in Hz, or 60 when Windows doesn't say.</summary>
+    public static int DisplayRefreshRate()
+    {
+        nint screen = GetDC(0);
+        try
+        {
+            int hz = GetDeviceCaps(screen, VREFRESH);
+            return hz > 1 ? hz : 60; // 0 and 1 mean "hardware default"
+        }
+        finally
+        {
+            ReleaseDC(0, screen);
+        }
+    }
+
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool EnumDisplayMonitors(nint hdc, RECT* lprcClip, delegate* unmanaged<nint, nint, RECT*, nint, int> lpfnEnum, nint dwData);
@@ -121,6 +141,13 @@ internal static unsafe partial class NativeMethods
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool SetForegroundWindow(nint hWnd);
+
+    public const int ASFW_ANY = -1;
+
+    /// <summary>Lets another process (the running Snappy) bring its window to the front.</summary>
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool AllowSetForegroundWindow(int dwProcessId);
 
     [LibraryImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]

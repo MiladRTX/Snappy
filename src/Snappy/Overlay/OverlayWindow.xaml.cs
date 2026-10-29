@@ -3,7 +3,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Threading;
 using Snappy.Capture;
 using Snappy.Geometry;
 using Snappy.Interop;
@@ -19,9 +18,7 @@ internal partial class OverlayWindow : Window
 {
     const double SegmentWidth = 120;
     const double InactiveSegmentOpacity = 0.65;
-    const double MinimumGlassTint = 0.55;
     const double HoveredSegmentOpacity = 0.85;
-    const double ToolbarRadius = 16;
     const double DimOpacity = 0.5;
     const int LoupeRadius = 7; // the magnifier shows 15 x 15 pixels
 
@@ -31,8 +28,6 @@ internal partial class OverlayWindow : Window
 
     readonly CaptureSession _session;
     readonly bool _hostsToolbar;
-    readonly RectangleGeometry _dimOuter = new();
-    readonly RectangleGeometry _dimHole = new();
     PhysicalRect? _highlight;
 
     public OverlayWindow(CaptureSession session, MonitorInfo monitor, bool hostsToolbar)
@@ -44,31 +39,17 @@ internal partial class OverlayWindow : Window
 
         Frozen.Source = session.Desktop.View(monitor.Bounds);
         LoupeBrush.ImageSource = session.Desktop.Image;
-        FrostBrush.ImageSource = Frozen.Source;
-        HintFrostBrush.ImageSource = Frozen.Source;
-        Dim.Data = new GeometryGroup { FillRule = FillRule.EvenOdd, Children = { _dimOuter, _dimHole } };
+        LitBrush.ImageSource = Frozen.Source;
         OnModeChanged(session.Mode, animate: false);
         WindowPlacement.Pin(this, monitor.Bounds, topmost: true, cloakUntilRendered: true);
 
-        // Laid out (still transparent) from the start, so the glass can be aimed before it slides in.
-        if (hostsToolbar) Toolbar.Visibility = Visibility.Visible;
-        Frost.SizeChanged += (_, e) => Frost.Clip = new RectangleGeometry(new Rect(e.NewSize), ToolbarRadius, ToolbarRadius);
-        HintFrost.SizeChanged += (_, e) =>
-            HintFrost.Clip = new RectangleGeometry(new Rect(e.NewSize), e.NewSize.Height / 2, e.NewSize.Height / 2);
-        // The hint pill changes width with the mode; re-aim once layout has settled.
-        FrostImage.SizeChanged += (_, _) => Dispatcher.InvokeAsync(AimGlass, DispatcherPriority.Loaded);
-        HintFrostImage.SizeChanged += (_, _) => Dispatcher.InvokeAsync(AimGlass, DispatcherPriority.Loaded);
-        foreach (var (button, _) in Segments)
+        foreach (var button in Segments)
         {
             button.MouseEnter += (_, _) => FadeSegment(button, HoveredSegmentOpacity);
             button.MouseLeave += (_, _) => FadeSegment(button, InactiveSegmentOpacity);
         }
 
-        SizeChanged += (_, _) =>
-        {
-            _dimOuter.Rect = new Rect(0, 0, ActualWidth, ActualHeight);
-            ShowHighlight(_highlight, animate: false);
-        };
+        SizeChanged += (_, _) => ShowHighlight(_highlight, animate: false);
         DpiChanged += (_, _) => ShowHighlight(_highlight, animate: false);
         ContentRendered += (_, _) => PlayIntro();
         Closed += (_, _) => _session.Cancel(); // Alt+F4 on any overlay cancels the capture
@@ -100,23 +81,19 @@ internal partial class OverlayWindow : Window
 
     double Scale => VisualTreeHelper.GetDpi(this).DpiScaleX;
 
-    /// <summary>Toolbar segments and their hints, in <see cref="CaptureMode"/> order.</summary>
-    (RadioButton Button, FrameworkElement Hint)[] Segments =>
-        [(RegionButton, RegionHint), (WindowButton, WindowHint), (ScreenButton, ScreenHint)];
+    /// <summary>Toolbar segments, in <see cref="CaptureMode"/> order.</summary>
+    RadioButton[] Segments => [RegionButton, WindowButton, ScreenButton];
 
     public void OnModeChanged(CaptureMode mode, bool animate = true)
     {
         var segments = Segments;
         for (int i = 0; i < segments.Length; i++)
         {
-            var (button, hint) = segments[i];
             bool active = i == (int)mode;
-            button.IsChecked = active;
-            Motion.Apply(button, OpacityProperty, active ? 1 : InactiveSegmentOpacity, 220, animate);
-            hint.Visibility = active ? Visibility.Visible : Visibility.Collapsed;
+            segments[i].IsChecked = active;
+            Motion.Apply(segments[i], OpacityProperty, active ? 1 : InactiveSegmentOpacity, 160, animate);
         }
-        if (animate) segments[(int)mode].Hint.BeginAnimation(OpacityProperty, Motion.Enter(0, 1, 260));
-        Motion.Apply(PillShift, TranslateTransform.XProperty, (int)mode * SegmentWidth, 280, animate);
+        Motion.Apply(PillShift, TranslateTransform.XProperty, (int)mode * SegmentWidth, 220, animate);
 
         Cursor = mode == CaptureMode.Region ? Cursors.Cross : Cursors.Arrow;
     }
@@ -131,7 +108,7 @@ internal partial class OverlayWindow : Window
 
         if (animate && HasArea(current) && HasArea(target))
         {
-            BeginAnimation(HighlightProperty, Motion.Move(current, target, 180));
+            BeginAnimation(HighlightProperty, Motion.Enter(current, target, 150));
         }
         else
         {
@@ -189,34 +166,9 @@ internal partial class OverlayWindow : Window
         // The frozen image matches the real screen, so this reads as the screen itself dimming.
         Dim.BeginAnimation(OpacityProperty, Motion.Enter(0, DimOpacity, 240));
         if (!_hostsToolbar) return;
-        AimGlass();
+        Toolbar.Visibility = Visibility.Visible;
         Toolbar.BeginAnimation(OpacityProperty, Motion.Enter(0, 1, 260));
         ToolbarShift.BeginAnimation(TranslateTransform.YProperty, Motion.Enter(-16, 0, 480));
-    }
-
-    /// <summary>Points each glass panel's blur at the part of the frozen screen behind it.</summary>
-    void AimGlass()
-    {
-        AimFrost(FrostImage, FrostBrush, ToolbarTint);
-        AimFrost(HintFrostImage, HintFrostBrush, HintTint);
-    }
-
-    void AimFrost(FrameworkElement area, ImageBrush brush, UIElement tint)
-    {
-        // Where the toolbar comes to rest, not where the slide-in starts.
-        var topLeft = area.TranslatePoint(new Point(0, 0), this);
-        topLeft.Y -= ToolbarShift.Y;
-        double scale = Scale;
-        var behind = new Rect(topLeft.X * scale, topLeft.Y * scale, area.ActualWidth * scale, area.ActualHeight * scale);
-        brush.Viewbox = behind;
-
-        // Adaptive tint, like macOS vibrancy: thin over content that already contrasts with the
-        // text, so the glass stays see-through, and thicker over content that doesn't (bright
-        // windows in the dark theme, dark ones in the light theme), so the text stays readable.
-        double luminance = _session.Desktop.MeanLuminance(new PhysicalRect(
-            Monitor.Bounds.X + (int)behind.X, Monitor.Bounds.Y + (int)behind.Y, (int)behind.Width, (int)behind.Height));
-        double glare = Theme.IsDark ? luminance : 1 - luminance;
-        tint.Opacity = MinimumGlassTint + (1 - MinimumGlassTint) * glare;
     }
 
     void FadeSegment(RadioButton button, double opacity)
@@ -228,13 +180,21 @@ internal partial class OverlayWindow : Window
     {
         var r = Highlight;
         bool visible = HasArea(r);
-        _dimHole.Rect = visible ? r : new Rect();
+        Lit.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         SelectionBorder.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         if (!visible) return;
 
+        // The undimmed area shows the frozen pixels under it, one image pixel per screen pixel.
+        double scale = Scale;
+        Canvas.SetLeft(Lit, r.X);
+        Canvas.SetTop(Lit, r.Y);
+        Lit.Width = r.Width;
+        Lit.Height = r.Height;
+        LitBrush.Viewbox = new Rect(r.X * scale, r.Y * scale, r.Width * scale, r.Height * scale);
+
         // Exactly 1 (or 2) physical pixels thick. Drawn outside the area so the border never
         // covers captured pixels, except for whole displays where outside is off-screen.
-        double pixel = 1 / Scale;
+        double pixel = 1 / scale;
         double thickness = (_session.Mode == CaptureMode.Region ? 1 : 2) * pixel;
         double outset = _session.Mode == CaptureMode.Screen ? 0 : thickness;
         SelectionBorder.BorderThickness = new Thickness(thickness);

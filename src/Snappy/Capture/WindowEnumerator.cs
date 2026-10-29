@@ -10,7 +10,7 @@ public sealed record WindowInfo(nint Handle, string Title, PhysicalRect Bounds);
 
 public static unsafe class WindowEnumerator
 {
-    /// <summary>Visible top-level windows of other apps, topmost first.</summary>
+    /// <summary>Visible top-level windows, topmost first.</summary>
     public static IReadOnlyList<WindowInfo> GetCapturableWindows(IReadOnlyList<MonitorInfo> monitors)
     {
         var handles = new List<nint>();
@@ -24,13 +24,12 @@ public static unsafe class WindowEnumerator
             state.Free();
         }
 
-        uint ownProcess = (uint)Environment.ProcessId;
+        // Snappy's own windows count too (its Settings window can be captured); the overlays
+        // don't exist yet when this runs, and the toast is closed before every capture.
         var windows = new List<WindowInfo>();
         foreach (var hwnd in handles)
         {
             if (!IsWindowVisible(hwnd) || IsIconic(hwnd) || IsCloaked(hwnd)) continue;
-            GetWindowThreadProcessId(hwnd, out uint process);
-            if (process == ownProcess) continue;
 
             long exStyle = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
             if ((exStyle & WS_EX_TRANSPARENT) != 0) continue; // click-through overlays

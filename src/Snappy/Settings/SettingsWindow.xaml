@@ -1,0 +1,341 @@
+<Window x:Class="Snappy.Settings.SettingsWindow"
+        x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:Snappy.Ui"
+        xmlns:settings="clr-namespace:Snappy.Settings"
+        Title="Snappy Settings"
+        Width="820"
+        Height="640"
+        MinWidth="720"
+        MinHeight="480"
+        WindowStartupLocation="CenterScreen"
+        Icon="pack://application:,,,/Assets/snappy.ico"
+        Background="{DynamicResource Snappy.Background}"
+        Foreground="{DynamicResource Snappy.Foreground}"
+        FontFamily="{DynamicResource Snappy.Font}"
+        UseLayoutRounding="True">
+    <Window.Resources>
+        <!-- A thin scrollbar that matches the palette, instead of the classic Windows one. -->
+        <Style x:Key="ScrollPage" TargetType="RepeatButton">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="IsTabStop" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Border Background="Transparent" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="ScrollThumb" TargetType="Thumb">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border x:Name="Bar" Width="6" HorizontalAlignment="Center" CornerRadius="3" Background="{DynamicResource Snappy.Divider}" />
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bar" Property="Background" Value="{DynamicResource Snappy.Ring}" />
+                            </Trigger>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter TargetName="Bar" Property="Background" Value="{DynamicResource Snappy.MutedForeground}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="ScrollBar">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Width" Value="12" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Track x:Name="PART_Track" Margin="0,6" IsDirectionReversed="True" Orientation="Vertical">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="ScrollBar.PageUpCommand" Style="{StaticResource ScrollPage}" />
+                            </Track.DecreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource ScrollThumb}" />
+                            </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="ScrollBar.PageDownCommand" Style="{StaticResource ScrollPage}" />
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="212" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar -->
+        <Border Background="{DynamicResource Snappy.Sidebar}" BorderBrush="{DynamicResource Snappy.Border}" BorderThickness="0,0,1,0">
+            <DockPanel Margin="12,18,12,14">
+                <StackPanel Margin="8,0,0,22" DockPanel.Dock="Top" Orientation="Horizontal">
+                    <Image Width="30" Height="30" Source="pack://application:,,,/Assets/snappy.ico" RenderOptions.BitmapScalingMode="HighQuality" />
+                    <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                        <TextBlock FontSize="15" FontWeight="SemiBold" Text="Snappy" />
+                        <TextBlock x:Name="VersionText" FontSize="11.5" Foreground="{DynamicResource Snappy.MutedForeground}" />
+                    </StackPanel>
+                </StackPanel>
+                <TextBlock Margin="10,0"
+                           DockPanel.Dock="Bottom"
+                           FontSize="11.5"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource Snappy.MutedForeground}"
+                           Text="Changes are saved as you make them." />
+                <StackPanel>
+                    <RadioButton Style="{StaticResource Snappy.NavItem}" Tag="{Binding ElementName=GeneralPage}" IsChecked="True" Checked="OnPageChecked">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:FaIcon Width="14" Height="14" Glyph="{StaticResource Fa.Gear}" />
+                            <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" Text="General" />
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource Snappy.NavItem}" Tag="{Binding ElementName=CapturePage}" Checked="OnPageChecked">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:FaIcon Width="14" Height="14" Glyph="{StaticResource Fa.CropSimple}" />
+                            <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" Text="Capture" />
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource Snappy.NavItem}" Tag="{Binding ElementName=ShortcutsPage}" Checked="OnPageChecked">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:FaIcon Width="14" Height="14" Glyph="{StaticResource Fa.Keyboard}" />
+                            <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" Text="Shortcuts" />
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource Snappy.NavItem}" Tag="{Binding ElementName=AboutPage}" Checked="OnPageChecked">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:FaIcon Width="14" Height="14" Glyph="{StaticResource Fa.CircleInfo}" />
+                            <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" Text="About" />
+                        </StackPanel>
+                    </RadioButton>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Pages -->
+        <ScrollViewer Grid.Column="1" Focusable="False" VerticalScrollBarVisibility="Auto">
+            <Grid MaxWidth="640" Margin="36,30,36,24" HorizontalAlignment="Left">
+
+                <!-- General -->
+                <StackPanel x:Name="GeneralPage">
+                    <TextBlock Style="{StaticResource Snappy.PageTitle}" Text="General" />
+                    <TextBlock Style="{StaticResource Snappy.PageHint}" Text="How Snappy starts, tells you about captures, and looks." />
+                    <Border Style="{StaticResource Snappy.Card}">
+                        <StackPanel>
+                            <DockPanel Style="{StaticResource Snappy.Row}">
+                                <CheckBox x:Name="StartupSwitch" DockPanel.Dock="Right" Style="{StaticResource Snappy.Switch}" Click="OnStartupClick" />
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource Snappy.RowTitle}" Text="Start with Windows" />
+                                    <TextBlock Style="{StaticResource Snappy.RowHint}" Text="Launch Snappy in the tray when you sign in." />
+                                </StackPanel>
+                            </DockPanel>
+                            <Border Style="{StaticResource Snappy.RowDivider}" />
+                            <DockPanel Style="{StaticResource Snappy.Row}">
+                                <CheckBox x:Name="NotifySwitch" DockPanel.Dock="Right" Style="{StaticResource Snappy.Switch}" Click="OnNotifyClick" />
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource Snappy.RowTitle}" Text="Capture notification" />
+                                    <TextBlock Style="{StaticResource Snappy.RowHint}" Text="Show a preview with Open and Show in folder after each capture. Problems are always shown." />
+                                </StackPanel>
+                            </DockPanel>
+                            <Border Style="{StaticResource Snappy.RowDivider}" />
+                            <DockPanel Style="{StaticResource Snappy.Row}">
+                                <Border DockPanel.Dock="Right" Style="{StaticResource Snappy.ChoiceGroup}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <RadioButton x:Name="SystemTheme" GroupName="Theme" Style="{StaticResource Snappy.Choice}" Tag="System" Content="System" Click="OnThemeClick" />
+                                        <RadioButton x:Name="LightTheme" GroupName="Theme" Style="{StaticResource Snappy.Choice}" Tag="Light" Content="Light" Click="OnThemeClick" />
+                                        <RadioButton x:Name="DarkTheme" GroupName="Theme" Style="{StaticResource Snappy.Choice}" Tag="Dark" Content="Dark" Click="OnThemeClick" />
+                                    </StackPanel>
+                                </Border>
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource Snappy.RowTitle}" Text="Appearance" />
+                                    <TextBlock Style="{StaticResource Snappy.RowHint}" Text="Follow Windows, or always use light or dark." />
+                                </StackPanel>
+                            </DockPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Capture -->
+                <StackPanel x:Name="CapturePage" Visibility="Collapsed">
+                    <TextBlock Style="{StaticResource Snappy.PageTitle}" Text="Capture" />
+                    <TextBlock Style="{StaticResource Snappy.PageHint}" Text="What happens to each screenshot. Captures are always full resolution and lossless." />
+                    <Border Style="{StaticResource Snappy.Card}">
+                        <StackPanel>
+                            <DockPanel Style="{StaticResource Snappy.Row}">
+                                <CheckBox x:Name="CopySwitch" DockPanel.Dock="Right" Style="{StaticResource Snappy.Switch}" Click="OnCopyClick" />
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource Snappy.RowTitle}" Text="Copy to clipboard" />
+                                    <TextBlock Style="{StaticResource Snappy.RowHint}" Text="Every capture is ready to paste." />
+                                </StackPanel>
+                            </DockPanel>
+                            <Border Style="{StaticResource Snappy.RowDivider}" />
+                            <DockPanel Style="{StaticResource Snappy.Row}">
+                                <CheckBox x:Name="SaveSwitch" DockPanel.Dock="Right" Style="{StaticResource Snappy.Switch}" Click="OnSaveClick" />
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource Snappy.RowTitle}" Text="Save to a file" />
+                                    <TextBlock Style="{StaticResource Snappy.RowHint}" Text="Every capture is saved as a PNG." />
+                                </StackPanel>
+                            </DockPanel>
+                            <Border Style="{StaticResource Snappy.RowDivider}" />
+                            <DockPanel x:Name="FolderRow" Style="{StaticResource Snappy.Row}">
+                                <StackPanel VerticalAlignment="Center" DockPanel.Dock="Right" Orientation="Horizontal">
+                                    <Button Margin="0,0,6,0" Style="{StaticResource Snappy.OutlineButton}" Content="Change…" Click="OnChangeFolderClick" />
+                                    <Button Style="{StaticResource Snappy.OutlineButton}" Content="Open" Click="OnOpenFolderClick" />
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource Snappy.RowTitle}" Text="Save folder" />
+                                    <TextBlock x:Name="FolderText" Style="{StaticResource Snappy.RowHint}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </DockPanel>
+                            <Border Style="{StaticResource Snappy.RowDivider}" />
+                            <DockPanel x:Name="FileNameRow" Style="{StaticResource Snappy.Row}">
+                                <TextBox x:Name="PatternBox"
+                                         Width="250"
+                                         VerticalAlignment="Center"
+                                         DockPanel.Dock="Right"
+                                         Style="{StaticResource Snappy.TextBox}"
+                                         TextChanged="OnPatternChanged"
+                                         LostKeyboardFocus="OnPatternLostFocus"
+                                         KeyDown="OnPatternKeyDown" />
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource Snappy.RowTitle}" Text="File name" />
+                                    <TextBlock Style="{StaticResource Snappy.RowHint}" Text="Text in { } is a date and time format." />
+                                    <TextBlock x:Name="PatternPreview" Style="{StaticResource Snappy.RowHint}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </DockPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Shortcuts -->
+                <StackPanel x:Name="ShortcutsPage" Visibility="Collapsed">
+                    <TextBlock Style="{StaticResource Snappy.PageTitle}" Text="Shortcuts" />
+                    <TextBlock Style="{StaticResource Snappy.PageHint}" Text="Global shortcuts work from any app. Click one, then press the keys you want. Backspace removes it." />
+                    <Border Style="{StaticResource Snappy.Card}">
+                        <StackPanel>
+                            <DockPanel Style="{StaticResource Snappy.Row}">
+                                <settings:HotkeyBox x:Name="RegionHotkey" VerticalAlignment="Center" DockPanel.Dock="Right" />
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource Snappy.RowTitle}" Text="Capture region" />
+                                    <TextBlock Style="{StaticResource Snappy.RowHint}" Text="Opens the overlay ready to drag an area." />
+                                    <TextBlock x:Name="RegionStatus" Margin="0,4,0,0" FontSize="12" Visibility="Collapsed" />
+                                </StackPanel>
+                            </DockPanel>
+                            <Border Style="{StaticResource Snappy.RowDivider}" />
+                            <DockPanel Style="{StaticResource Snappy.Row}">
+                                <settings:HotkeyBox x:Name="WindowHotkey" VerticalAlignment="Center" DockPanel.Dock="Right" />
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource Snappy.RowTitle}" Text="Capture window" />
+                                    <TextBlock Style="{StaticResource Snappy.RowHint}" Text="Opens the overlay ready to click a window." />
+                                    <TextBlock x:Name="WindowStatus" Margin="0,4,0,0" FontSize="12" Visibility="Collapsed" />
+                                </StackPanel>
+                            </DockPanel>
+                            <Border Style="{StaticResource Snappy.RowDivider}" />
+                            <DockPanel Style="{StaticResource Snappy.Row}">
+                                <settings:HotkeyBox x:Name="ScreenHotkey" VerticalAlignment="Center" DockPanel.Dock="Right" />
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource Snappy.RowTitle}" Text="Capture display" />
+                                    <TextBlock Style="{StaticResource Snappy.RowHint}" Text="Opens the overlay ready to click a display." />
+                                    <TextBlock x:Name="ScreenStatus" Margin="0,4,0,0" FontSize="12" Visibility="Collapsed" />
+                                </StackPanel>
+                            </DockPanel>
+                            <Border Style="{StaticResource Snappy.RowDivider}" />
+                            <DockPanel Style="{StaticResource Snappy.Row}">
+                                <settings:HotkeyBox x:Name="AllDisplaysHotkey" VerticalAlignment="Center" DockPanel.Dock="Right" />
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource Snappy.RowTitle}" Text="Capture all displays" />
+                                    <TextBlock Style="{StaticResource Snappy.RowHint}" Text="Captures every display at once, no overlay." />
+                                    <TextBlock x:Name="AllDisplaysStatus" Margin="0,4,0,0" FontSize="12" Visibility="Collapsed" />
+                                </StackPanel>
+                            </DockPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Margin="2,6,0,10" Style="{StaticResource Snappy.RowTitle}" Text="In the capture overlay" />
+                    <Border Style="{StaticResource Snappy.Card}">
+                        <StackPanel>
+                            <DockPanel Style="{StaticResource Snappy.Row}">
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                    <Border Margin="0,0,4,0" Style="{StaticResource Snappy.Kbd}"><TextBlock Style="{StaticResource Snappy.KbdText}" Text="R" /></Border>
+                                    <Border Margin="0,0,4,0" Style="{StaticResource Snappy.Kbd}"><TextBlock Style="{StaticResource Snappy.KbdText}" Text="W" /></Border>
+                                    <Border Style="{StaticResource Snappy.Kbd}"><TextBlock Style="{StaticResource Snappy.KbdText}" Text="F" /></Border>
+                                </StackPanel>
+                                <TextBlock VerticalAlignment="Center" FontSize="13" Text="Switch to region, window or display" />
+                            </DockPanel>
+                            <Border Style="{StaticResource Snappy.RowDivider}" />
+                            <DockPanel Style="{StaticResource Snappy.Row}">
+                                <Border DockPanel.Dock="Right" Style="{StaticResource Snappy.Kbd}"><TextBlock Style="{StaticResource Snappy.KbdText}" Text="Enter" /></Border>
+                                <TextBlock VerticalAlignment="Center" FontSize="13" Text="Capture all displays (in display mode)" />
+                            </DockPanel>
+                            <Border Style="{StaticResource Snappy.RowDivider}" />
+                            <DockPanel Style="{StaticResource Snappy.Row}">
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                    <Border Style="{StaticResource Snappy.Kbd}"><TextBlock Style="{StaticResource Snappy.KbdText}" Text="Esc" /></Border>
+                                    <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource Snappy.MutedForeground}" Text="or right-click" />
+                                </StackPanel>
+                                <TextBlock VerticalAlignment="Center" FontSize="13" Text="Cancel" />
+                            </DockPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- About -->
+                <StackPanel x:Name="AboutPage" Visibility="Collapsed">
+                    <Border Padding="24" Style="{StaticResource Snappy.Card}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Image Width="56" Height="56" Source="pack://application:,,,/Assets/snappy.ico" RenderOptions.BitmapScalingMode="HighQuality" />
+                                <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock FontSize="20" FontWeight="SemiBold" Text="Snappy" />
+                                    <TextBlock x:Name="AboutVersionText" Margin="0,2,0,0" FontSize="12.5" Foreground="{DynamicResource Snappy.MutedForeground}" />
+                                </StackPanel>
+                            </StackPanel>
+                            <TextBlock Margin="0,16,0,18"
+                                       FontSize="13"
+                                       TextWrapping="Wrap"
+                                       Foreground="{DynamicResource Snappy.MutedForeground}"
+                                       Text="Screenshots at your displays' real resolution, never rescaled by Windows display scaling, on any mix of monitors." />
+                            <WrapPanel>
+                                <Button Margin="0,0,8,8" Style="{StaticResource Snappy.PrimaryButton}" Click="OnGitHubClick">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:FaIcon Width="13" Height="13" Glyph="{StaticResource Fa.GitHub}" />
+                                        <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Text="GitHub" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Margin="0,0,8,8" Style="{StaticResource Snappy.OutlineButton}" Click="OnOpenFolderClick">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:FaIcon Width="13" Height="13" Glyph="{StaticResource Fa.FolderOpen}" />
+                                        <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Text="Captures folder" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Margin="0,0,8,8" Style="{StaticResource Snappy.OutlineButton}" Click="OnSettingsFileClick">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:FaIcon Width="13" Height="13" Glyph="{StaticResource Fa.FileLines}" />
+                                        <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Text="Settings file" />
+                                    </StackPanel>
+                                </Button>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Snappy.Card}">
+                        <DockPanel Style="{StaticResource Snappy.Row}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource Snappy.RowTitle}" Text="Credits" />
+                                <TextBlock Style="{StaticResource Snappy.RowHint}" Text="Icons from Font Awesome Free 7.3.1 by Fonticons, Inc., licensed under CC BY 4.0." />
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</Window>

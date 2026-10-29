@@ -6,6 +6,7 @@
         <ResourceDictionary>
             <!-- The light/dark palette is inserted in front of these at startup (see Ui/Theme.cs). -->
             <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Icons.xaml" />
                 <ResourceDictionary Source="Themes/Controls.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

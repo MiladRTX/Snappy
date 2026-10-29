@@ -9,6 +9,14 @@
     <SolidColorBrush x:Key="Snappy.Primary" Color="#18181B" />
     <SolidColorBrush x:Key="Snappy.PrimaryForeground" Color="#FAFAFA" />
     <SolidColorBrush x:Key="Snappy.Destructive" Color="#DC2626" />
+    <SolidColorBrush x:Key="Snappy.Success" Color="#16A34A" />
+
+    <!-- Settings window: page background, sidebar, cards, focus ring, switch track. -->
+    <SolidColorBrush x:Key="Snappy.Background" Color="#FAFAFA" />
+    <SolidColorBrush x:Key="Snappy.Sidebar" Color="#F4F4F5" />
+    <SolidColorBrush x:Key="Snappy.CardBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="Snappy.Ring" Color="#A1A1AA" />
+    <SolidColorBrush x:Key="Snappy.SwitchTrack" Color="#D4D4D8" />
 
     <!-- Floating surfaces (toolbar, cursor card, toast, menu). -->
     <LinearGradientBrush x:Key="Snappy.Surface" StartPoint="0,0" EndPoint="0,1">
@@ -21,32 +29,16 @@
         <GradientStop Offset="1" Color="#24000000" />
     </LinearGradientBrush>
 
-    <!--
-        Glass (toolbar and hint): a milky white tint over the blurred screen, a bright sheen and a
-        white rim. The tint is at full strength over dark windows and thins out over light
-        content (see OverlayWindow.AimFrost).
-    -->
-    <LinearGradientBrush x:Key="Snappy.GlassTint" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#D1FFFFFF" />
-        <GradientStop Offset="1" Color="#E0F6F6F7" />
-    </LinearGradientBrush>
-    <LinearGradientBrush x:Key="Snappy.GlassSheen" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#66FFFFFF" />
-        <GradientStop Offset="0.6" Color="#00FFFFFF" />
-    </LinearGradientBrush>
-    <LinearGradientBrush x:Key="Snappy.GlassEdge" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#E6FFFFFF" />
-        <GradientStop Offset="0.5" Color="#40FFFFFF" />
-        <GradientStop Offset="1" Color="#1F000000" />
-    </LinearGradientBrush>
-    <SolidColorBrush x:Key="Snappy.GlassMutedForeground" Color="#3F3F46" />
+    <!-- Menu items: a clear highlight under the pointer, a little stronger while pressed. -->
+    <SolidColorBrush x:Key="Snappy.ItemHover" Color="#0F000000" />
+    <SolidColorBrush x:Key="Snappy.ItemPressed" Color="#1A000000" />
 
-    <!-- Active segment: a brighter pane of glass. -->
+    <!-- Active segment: a recessed well, like shadcn's light tabs. -->
     <LinearGradientBrush x:Key="Snappy.SegmentActive" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#F2FFFFFF" />
-        <GradientStop Offset="1" Color="#D9FFFFFF" />
+        <GradientStop Offset="0" Color="#EDEDF0" />
+        <GradientStop Offset="1" Color="#F4F4F5" />
     </LinearGradientBrush>
-    <SolidColorBrush x:Key="Snappy.SegmentActiveEdge" Color="#1A000000" />
+    <SolidColorBrush x:Key="Snappy.SegmentActiveEdge" Color="#0F000000" />
     <SolidColorBrush x:Key="Snappy.SegmentHover" Color="#0A000000" />
 
     <SolidColorBrush x:Key="Snappy.KbdBackground" Color="#0A000000" />

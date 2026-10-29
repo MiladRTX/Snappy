@@ -43,6 +43,21 @@ public class HotkeyGestureTests
         Assert.Equal(text, gesture.ToString());
     }
 
+    [Theory]
+    [InlineData("Ctrl+S", true)]
+    [InlineData("Win+Shift+A", true)]
+    [InlineData("F9", true)]
+    [InlineData("F24", true)]
+    [InlineData("PrintScreen", true)]
+    [InlineData("S", false)]       // would break typing "s" in every app
+    [InlineData("Insert", false)]
+    [InlineData("Space", false)]
+    public void Only_shortcuts_that_leave_typing_alone_are_suitable_globally(string text, bool suitable)
+    {
+        Assert.True(HotkeyGesture.TryParse(text, out var gesture));
+        Assert.Equal(suitable, gesture.IsSuitableForGlobal);
+    }
+
     [Fact]
     public void Maps_to_RegisterHotKey_values()
     {

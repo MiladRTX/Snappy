@@ -11,9 +11,11 @@ dotnet run --project src/Snappy
 
 Snappy lives in the notification area. Start a capture by:
 
-- pressing the hotkey (default `Ctrl+Shift+S`, see Settings),
-- left-clicking the tray icon, or
-- launching Snappy again (from Start or a pinned taskbar icon).
+- pressing a shortcut (region capture is `Ctrl+Shift+S` by default; see Settings),
+- left-clicking the tray icon, or using its right-click menu, or
+- running `Snappy.exe --capture` (handy for other launchers and macro keys).
+
+Launching Snappy again (from Start or a pinned taskbar icon) opens the Settings window.
 
 ## Capturing
 
@@ -32,18 +34,33 @@ Each capture is copied to the clipboard (PNG and bitmap) and saved as a lossless
 
 ## Settings
 
-`%AppData%\Snappy\settings.json` (tray menu → Settings). Changes apply as soon as you save.
+Open **Settings** from the tray menu (or launch Snappy again). Changes are saved and applied as
+you make them:
+
+- **General**: start with Windows, the capture notification, and light/dark/system appearance.
+- **Capture**: copy to clipboard, save to a file, the save folder and the file name pattern
+  (with a live preview).
+- **Shortcuts**: record a global shortcut for each of region, window, display and all displays.
+  Snappy tells you right there if another app already owns a shortcut or two actions share one.
+
+Everything is stored in `%AppData%\Snappy\settings.json`, which you can also edit by hand; Snappy
+picks up changes as soon as the file is saved.
 
 | Setting | Default | |
 | --- | --- | --- |
-| `hotkey` | `Ctrl+Shift+S` | e.g. `Ctrl+Alt+S`, `Ctrl+PrintScreen`, `Win+F9` |
+| `hotkey` | `Ctrl+Shift+S` | region capture; e.g. `Ctrl+Alt+S`, `Ctrl+PrintScreen`, `Win+F9`; `""` turns it off |
+| `windowHotkey` | `""` (off) | window capture |
+| `screenHotkey` | `""` (off) | display capture |
+| `allDisplaysHotkey` | `""` (off) | all displays at once, no overlay |
 | `saveFolder` | `Pictures\Snappy` | environment variables like `%USERPROFILE%` work |
 | `fileNamePattern` | `Snappy_{yyyy-MM-dd_HH-mm-ss}` | `{...}` holds a .NET date/time format |
 | `saveToFile` | `true` | |
 | `copyToClipboard` | `true` | |
 | `showNotification` | `true` | errors are always shown |
+| `theme` | `System` | `System`, `Light` or `Dark` |
 
-If another app already owns the hotkey, Snappy says so in a notification; pick another one here.
+Shortcuts need a modifier (`Ctrl`, `Alt`, `Shift` or `Win`) unless they're a function key or
+`PrintScreen`, so they can't hijack normal typing.
 
 ## How captures stay native
 
@@ -64,3 +81,10 @@ dotnet test
 ```
 
 Includes a real capture of the machine's displays, checked against each display's video mode.
+
+## Credits
+
+Icons are from [Font Awesome Free](https://fontawesome.com) 7.3.1 by Fonticons, Inc., licensed
+under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) (see
+[fontawesome.com/license/free](https://fontawesome.com/license/free)). Their path data is used
+unchanged in `src/Snappy/Themes/Icons.xaml`.

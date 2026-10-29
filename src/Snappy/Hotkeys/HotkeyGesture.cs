@@ -10,6 +10,13 @@ public readonly record struct HotkeyGesture(ModifierKeys Modifiers, Key Key)
 
     public uint VirtualKey => (uint)KeyInterop.VirtualKeyFromKey(Key);
 
+    /// <summary>
+    /// Whether this is safe to take over system-wide: it needs a modifier, unless it's a key
+    /// nobody types text with (F1-F24, PrintScreen, Pause). A bare "S" would break typing everywhere.
+    /// </summary>
+    public bool IsSuitableForGlobal =>
+        Modifiers != ModifierKeys.None || Key is >= Key.F1 and <= Key.F24 or Key.PrintScreen or Key.Pause;
+
     public static bool TryParse(string? text, out HotkeyGesture gesture)
     {
         gesture = default;

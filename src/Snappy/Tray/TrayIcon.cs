@@ -2,8 +2,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Interop;
+using Snappy.Hotkeys;
 using Snappy.Interop;
-using Snappy.Overlay;
 using Forms = System.Windows.Forms;
 
 namespace Snappy.Tray;
@@ -13,41 +13,46 @@ internal sealed class TrayIcon : IDisposable
 {
     readonly Forms.NotifyIcon _icon;
     readonly ContextMenu _menu;
-    readonly MenuItem _regionItem;
+    readonly Dictionary<HotkeyAction, MenuItem> _captureItems = [];
 
     public TrayIcon()
     {
         _menu = new ContextMenu { Placement = PlacementMode.MousePoint };
         _menu.SetResourceReference(FrameworkElement.StyleProperty, "Snappy.Menu");
-        _regionItem = AddItem("Capture region", "", () => CaptureRequested?.Invoke(CaptureMode.Region));
-        AddItem("Capture window", "", () => CaptureRequested?.Invoke(CaptureMode.Window));
-        AddItem("Capture display", "", () => CaptureRequested?.Invoke(CaptureMode.Screen));
-        AddItem("Capture all displays", "", () => CaptureAllRequested?.Invoke());
+        AddCaptureItem(HotkeyAction.CaptureRegion, "Fa.CropSimple");
+        AddCaptureItem(HotkeyAction.CaptureWindow, "Fa.WindowMaximize");
+        AddCaptureItem(HotkeyAction.CaptureScreen, "Fa.Display");
+        AddCaptureItem(HotkeyAction.CaptureAllDisplays, "Fa.Expand");
         AddSeparator();
-        AddItem("Open captures folder", "", () => OpenFolderRequested?.Invoke());
-        AddItem("Settings", "", () => OpenSettingsRequested?.Invoke());
+        AddItem("Open captures folder", "Fa.FolderOpen", () => OpenFolderRequested?.Invoke());
+        AddItem("Settings", "Fa.Gear", () => OpenSettingsRequested?.Invoke());
         AddSeparator();
-        AddItem("Quit Snappy", "", () => ExitRequested?.Invoke());
+        AddItem("Quit Snappy", "Fa.PowerOff", () => ExitRequested?.Invoke());
 
         _icon = new Forms.NotifyIcon { Icon = LoadIcon(), Text = "Snappy", Visible = true };
         _icon.MouseUp += OnIconMouseUp;
     }
 
-    public event Action<CaptureMode>? CaptureRequested;
-    public event Action? CaptureAllRequested;
+    public event Action<HotkeyAction>? ActionRequested;
     public event Action? OpenFolderRequested;
     public event Action? OpenSettingsRequested;
     public event Action? ExitRequested;
 
-    public void SetHotkey(string? gesture)
+    /// <summary>Shows each capture item's shortcut, and the region shortcut in the tooltip.</summary>
+    public void SetHotkeys(Func<HotkeyAction, string?> gestureFor)
     {
-        _regionItem.InputGestureText = gesture ?? "";
-        _icon.Text = gesture is null ? "Snappy" : $"Snappy: {gesture} to capture";
+        foreach (var (action, item) in _captureItems) item.InputGestureText = gestureFor(action) ?? "";
+        var region = gestureFor(HotkeyAction.CaptureRegion);
+        _icon.Text = region is null ? "Snappy" : $"Snappy: {region} to capture";
     }
 
-    MenuItem AddItem(string header, string glyph, Action onClick)
+    void AddCaptureItem(HotkeyAction action, string iconKey) =>
+        _captureItems[action] = AddItem(HotkeyActions.Label(action), iconKey, () => ActionRequested?.Invoke(action));
+
+    /// <summary>Adds a menu item; <paramref name="iconKey"/> names an icon in Themes/Icons.xaml.</summary>
+    MenuItem AddItem(string header, string iconKey, Action onClick)
     {
-        var item = new MenuItem { Header = header, Tag = glyph };
+        var item = new MenuItem { Header = header, Tag = Application.Current.FindResource(iconKey) };
         item.SetResourceReference(FrameworkElement.StyleProperty, "Snappy.MenuItem");
         item.Click += (_, _) => onClick();
         _menu.Items.Add(item);
@@ -63,7 +68,7 @@ internal sealed class TrayIcon : IDisposable
 
     void OnIconMouseUp(object? sender, Forms.MouseEventArgs e)
     {
-        if (e.Button == Forms.MouseButtons.Left) CaptureRequested?.Invoke(CaptureMode.Region);
+        if (e.Button == Forms.MouseButtons.Left) ActionRequested?.Invoke(HotkeyAction.CaptureRegion);
         else if (e.Button == Forms.MouseButtons.Right) ShowMenu();
     }
 

@@ -1,38 +1,56 @@
 using System.Windows;
 using System.Windows.Media.Animation;
+using Snappy.Interop;
 
 namespace Snappy.Ui;
 
 /// <summary>
 /// Shared animation curves, so every transition in the app moves the same way: things appearing
-/// decelerate in, things leaving accelerate out, things changing state ease in and out. Durations
-/// follow the usual scale: 100-150 ms for hover feedback, 200-300 ms for small state changes,
-/// 300-500 ms for elements entering. When Windows' "Animation effects" setting is off, every
-/// transition is instant.
+/// or responding to a click start fast and settle gently; things leaving accelerate out.
+/// Durations follow the usual scale: 100-150 ms for hover feedback, 150-250 ms for state
+/// changes, 300-500 ms for elements entering. Animations run at the display's refresh rate,
+/// and are instant when Windows' "Animation effects" setting is off.
 /// </summary>
 internal static class Motion
 {
     static readonly IEasingFunction EnterCurve = new CubicBezierEase(0.16, 1, 0.3, 1);
     static readonly IEasingFunction ExitCurve = new CubicBezierEase(0.55, 0, 1, 0.45);
-    static readonly IEasingFunction MoveCurve = new CubicBezierEase(0.65, 0, 0.35, 1);
 
-    /// <summary>Something appearing: a fast start that settles gently.</summary>
+    /// <summary>Animation frames per second; WPF's default is 60 whatever the display.</summary>
+    public static int FrameRate { get; private set; } = 60;
+
+    /// <summary>
+    /// Animates at the main display's refresh rate (e.g. 155 Hz) instead of WPF's 60 fps.
+    /// Call once at startup, before any animation exists.
+    /// </summary>
+    public static void MatchDisplayRefreshRate()
+    {
+        FrameRate = Math.Max(60, NativeMethods.DisplayRefreshRate());
+        try
+        {
+            // Covers the storyboards in XAML too (hover fades, button presses).
+            Timeline.DesiredFrameRateProperty.OverrideMetadata(typeof(Timeline),
+                new FrameworkPropertyMetadata { DefaultValue = (int?)FrameRate });
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        {
+            // Already in use; animations created below still get the rate explicitly.
+        }
+    }
+
+    /// <summary>Something appearing or responding to the user: a fast start that settles gently.</summary>
     public static DoubleAnimation Enter(double to, int milliseconds) =>
-        new(to, Duration(milliseconds)) { EasingFunction = EnterCurve };
+        Smooth(new DoubleAnimation(to, Duration(milliseconds)) { EasingFunction = EnterCurve });
 
     public static DoubleAnimation Enter(double from, double to, int milliseconds) =>
-        new(from, to, Duration(milliseconds)) { EasingFunction = EnterCurve };
+        Smooth(new DoubleAnimation(from, to, Duration(milliseconds)) { EasingFunction = EnterCurve });
+
+    public static RectAnimation Enter(Rect from, Rect to, int milliseconds) =>
+        Smooth(new RectAnimation(from, to, Duration(milliseconds)) { EasingFunction = EnterCurve });
 
     /// <summary>Something leaving: a gentle start that finishes quickly.</summary>
     public static DoubleAnimation Exit(double to, int milliseconds) =>
-        new(to, Duration(milliseconds)) { EasingFunction = ExitCurve };
-
-    /// <summary>Something moving from one state to another, like the mode pill.</summary>
-    public static DoubleAnimation Move(double to, int milliseconds) =>
-        new(to, Duration(milliseconds)) { EasingFunction = MoveCurve };
-
-    public static RectAnimation Move(Rect from, Rect to, int milliseconds) =>
-        new(from, to, Duration(milliseconds)) { EasingFunction = MoveCurve };
+        Smooth(new DoubleAnimation(to, Duration(milliseconds)) { EasingFunction = ExitCurve });
 
     /// <summary>Moves a property to <paramref name="to"/>, animated or at once.</summary>
     public static void Apply<T>(T target, DependencyProperty property, double to, int milliseconds, bool animate)
@@ -40,11 +58,17 @@ internal static class Motion
     {
         if (animate)
         {
-            target.BeginAnimation(property, Move(to, milliseconds));
+            target.BeginAnimation(property, Enter(to, milliseconds));
             return;
         }
         target.BeginAnimation(property, null);
         target.SetValue(property, to);
+    }
+
+    static TTimeline Smooth<TTimeline>(TTimeline timeline) where TTimeline : Timeline
+    {
+        Timeline.SetDesiredFrameRate(timeline, FrameRate);
+        return timeline;
     }
 
     static Duration Duration(int milliseconds) =>

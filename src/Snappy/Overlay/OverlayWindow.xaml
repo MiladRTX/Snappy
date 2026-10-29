@@ -3,6 +3,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:overlay="clr-namespace:Snappy.Overlay"
+        xmlns:ui="clr-namespace:Snappy.Ui"
         Title="Snappy"
         WindowStyle="None"
         ResizeMode="NoResize"
@@ -14,45 +15,38 @@
         FontFamily="{DynamicResource Snappy.Font}"
         Foreground="{DynamicResource Snappy.Foreground}"
         Cursor="Cross">
-    <Window.Resources>
-        <!-- The layers of a glass panel, front to back: rim, sheen, tint, blurred screen, base. -->
-        <Style x:Key="GlassBase" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource Snappy.Surface}" />
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect BlurRadius="44" ShadowDepth="14" Direction="270" Opacity="0.45" Color="Black" />
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <Style x:Key="GlassBlur" TargetType="Rectangle">
-            <!-- Larger than the panel so the blur has real pixels to sample at the edges. -->
-            <Setter Property="Margin" Value="-40" />
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <BlurEffect Radius="40" KernelType="Gaussian" RenderingBias="Quality" />
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Window.Resources>
-
     <Grid>
         <!-- This display's slice of the frozen desktop, one image pixel per screen pixel. -->
         <Image x:Name="Frozen" Stretch="Fill" RenderOptions.BitmapScalingMode="NearestNeighbor" />
 
-        <!-- Dim layer; the highlighted area is cut out of it. -->
-        <Path x:Name="Dim" Fill="Black" Opacity="0" IsHitTestVisible="False" />
+        <!-- Dim layer. It never changes while the highlight moves, so it never has to be redrawn. -->
+        <Rectangle x:Name="Dim" Fill="Black" Opacity="0" IsHitTestVisible="False" />
 
         <Canvas IsHitTestVisible="False">
+            <!--
+                The highlighted area, undimmed: the same frozen pixels, shown only inside the
+                highlight. Moving it redraws just the old and new area, not the whole display.
+            -->
+            <Rectangle x:Name="Lit" Visibility="Collapsed" RenderOptions.BitmapScalingMode="NearestNeighbor">
+                <Rectangle.Fill>
+                    <ImageBrush x:Name="LitBrush" ViewboxUnits="Absolute" Stretch="Fill" />
+                </Rectangle.Fill>
+            </Rectangle>
             <Border x:Name="SelectionBorder" BorderBrush="White" Visibility="Collapsed" />
 
             <!-- Card that follows the cursor: magnifier, size, position, color. -->
             <Grid x:Name="Card" Visibility="Collapsed">
-                <Border CornerRadius="12" Background="{DynamicResource Snappy.Surface}">
+                <!-- Shadow, rendered once and cached so moving the card doesn't re-blur it. -->
+                <Border CornerRadius="12" Background="{DynamicResource Snappy.Surface}" CacheMode="BitmapCache">
                     <Border.Effect>
                         <DropShadowEffect BlurRadius="24" ShadowDepth="6" Direction="270" Opacity="0.45" Color="Black" />
                     </Border.Effect>
                 </Border>
-                <Border Padding="6" CornerRadius="12" BorderThickness="1" BorderBrush="{DynamicResource Snappy.SurfaceEdge}">
+                <Border Padding="6"
+                        CornerRadius="12"
+                        BorderThickness="1"
+                        Background="{DynamicResource Snappy.Surface}"
+                        BorderBrush="{DynamicResource Snappy.SurfaceEdge}">
                     <StackPanel>
                         <Border x:Name="Loupe"
                                 Width="120"
@@ -94,152 +88,92 @@
             </Grid>
         </Canvas>
 
-        <!-- Mode toolbar, shown on the display the cursor was on. -->
-        <StackPanel x:Name="Toolbar"
-                    Margin="0,28,0,0"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Top"
-                    Cursor="Arrow"
-                    Opacity="0"
-                    Visibility="Collapsed">
-            <StackPanel.RenderTransform>
+        <!-- Mode toolbar, on the display the cursor was on. Same solid surface as the tray menu. -->
+        <Grid x:Name="Toolbar"
+              Margin="0,28,0,0"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Top"
+              Cursor="Arrow"
+              Opacity="0"
+              Visibility="Collapsed">
+            <Grid.RenderTransform>
                 <TranslateTransform x:Name="ToolbarShift" Y="-16" />
-            </StackPanel.RenderTransform>
+            </Grid.RenderTransform>
 
-            <!-- Glass panel holding the mode switcher. -->
-            <Grid>
-                <Border CornerRadius="16" Style="{StaticResource GlassBase}" />
-                <Grid x:Name="Frost" Opacity="0.7">
-                    <Rectangle x:Name="FrostImage" Style="{StaticResource GlassBlur}">
-                        <Rectangle.Fill>
-                            <ImageBrush x:Name="FrostBrush" ViewboxUnits="Absolute" Stretch="Fill" />
-                        </Rectangle.Fill>
-                    </Rectangle>
-                </Grid>
-                <Border x:Name="ToolbarTint" CornerRadius="16" Background="{DynamicResource Snappy.GlassTint}" />
-                <Border CornerRadius="16" Background="{DynamicResource Snappy.GlassSheen}" />
-                <Border Padding="5" CornerRadius="16" BorderThickness="1" BorderBrush="{DynamicResource Snappy.GlassEdge}">
-                    <StackPanel Orientation="Horizontal">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="120" />
-                                <ColumnDefinition Width="120" />
-                                <ColumnDefinition Width="120" />
-                            </Grid.ColumnDefinitions>
-                            <Border x:Name="SegmentPill"
-                                    CornerRadius="10"
-                                    BorderThickness="1"
-                                    Background="{DynamicResource Snappy.SegmentActive}"
-                                    BorderBrush="{DynamicResource Snappy.SegmentActiveEdge}">
-                                <Border.Effect>
-                                    <DropShadowEffect BlurRadius="12" ShadowDepth="2" Direction="270" Opacity="0.3" Color="Black" />
-                                </Border.Effect>
-                                <Border.RenderTransform>
-                                    <TranslateTransform x:Name="PillShift" />
-                                </Border.RenderTransform>
-                            </Border>
-                            <RadioButton x:Name="RegionButton"
-                                         Grid.Column="0"
-                                         Style="{StaticResource Snappy.Segment}"
-                                         Tag="{x:Static overlay:CaptureMode.Region}"
-                                         Click="OnModeClick">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Style="{StaticResource Snappy.Icon}" FontSize="15" Text="&#xE7A8;" />
-                                    <TextBlock Margin="9,0,10,0" VerticalAlignment="Center" FontWeight="SemiBold" Text="Region" />
-                                    <Border Style="{StaticResource Snappy.Kbd}">
-                                        <TextBlock Style="{StaticResource Snappy.KbdText}" Text="R" />
-                                    </Border>
-                                </StackPanel>
-                            </RadioButton>
-                            <RadioButton x:Name="WindowButton"
-                                         Grid.Column="1"
-                                         Style="{StaticResource Snappy.Segment}"
-                                         Tag="{x:Static overlay:CaptureMode.Window}"
-                                         Click="OnModeClick">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Style="{StaticResource Snappy.Icon}" FontSize="15" Text="&#xE737;" />
-                                    <TextBlock Margin="9,0,10,0" VerticalAlignment="Center" FontWeight="SemiBold" Text="Window" />
-                                    <Border Style="{StaticResource Snappy.Kbd}">
-                                        <TextBlock Style="{StaticResource Snappy.KbdText}" Text="W" />
-                                    </Border>
-                                </StackPanel>
-                            </RadioButton>
-                            <RadioButton x:Name="ScreenButton"
-                                         Grid.Column="2"
-                                         Style="{StaticResource Snappy.Segment}"
-                                         Tag="{x:Static overlay:CaptureMode.Screen}"
-                                         Click="OnModeClick">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Style="{StaticResource Snappy.Icon}" FontSize="15" Text="&#xE7F4;" />
-                                    <TextBlock Margin="9,0,10,0" VerticalAlignment="Center" FontWeight="SemiBold" Text="Screen" />
-                                    <Border Style="{StaticResource Snappy.Kbd}">
-                                        <TextBlock Style="{StaticResource Snappy.KbdText}" Text="F" />
-                                    </Border>
-                                </StackPanel>
-                            </RadioButton>
-                        </Grid>
-                        <Border Width="1" Height="20" Margin="8,0" Background="{DynamicResource Snappy.Divider}" />
-                        <Button Style="{StaticResource Snappy.IconButton}" Click="OnCloseClick">
-                            <TextBlock Style="{StaticResource Snappy.Icon}" FontSize="13" Text="&#xE711;" />
-                        </Button>
-                    </StackPanel>
-                </Border>
-            </Grid>
-
-            <!--
-                What to do next in the current mode: a smaller glass pill. Its height is fixed and
-                its corner radius is exactly half of it; WPF bends larger radii into ovals.
-            -->
-            <Grid Height="32" Margin="0,12,0,0" HorizontalAlignment="Center">
-                <Border CornerRadius="16" Style="{StaticResource GlassBase}" />
-                <Grid x:Name="HintFrost" Opacity="0.7">
-                    <Rectangle x:Name="HintFrostImage" Style="{StaticResource GlassBlur}">
-                        <Rectangle.Fill>
-                            <ImageBrush x:Name="HintFrostBrush" ViewboxUnits="Absolute" Stretch="Fill" />
-                        </Rectangle.Fill>
-                    </Rectangle>
-                </Grid>
-                <Border x:Name="HintTint" CornerRadius="16" Background="{DynamicResource Snappy.GlassTint}" />
-                <Border CornerRadius="16" Background="{DynamicResource Snappy.GlassSheen}" />
-                <Border Padding="14,0"
-                        CornerRadius="16"
-                        BorderThickness="1"
-                        BorderBrush="{DynamicResource Snappy.GlassEdge}"
-                        TextElement.FontSize="12"
-                        TextElement.Foreground="{DynamicResource Snappy.GlassMutedForeground}">
-                    <Grid VerticalAlignment="Center">
-                        <StackPanel x:Name="RegionHint" Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center" Text="Drag to capture an area" />
-                            <Ellipse Style="{StaticResource Snappy.Dot}" />
-                            <Border Style="{StaticResource Snappy.Kbd}">
-                                <TextBlock Style="{StaticResource Snappy.KbdText}" Text="Esc" />
-                            </Border>
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="to cancel" />
-                        </StackPanel>
-                        <StackPanel x:Name="WindowHint" Orientation="Horizontal" Visibility="Collapsed">
-                            <TextBlock VerticalAlignment="Center" Text="Click a window to capture it" />
-                            <Ellipse Style="{StaticResource Snappy.Dot}" />
-                            <Border Style="{StaticResource Snappy.Kbd}">
-                                <TextBlock Style="{StaticResource Snappy.KbdText}" Text="Esc" />
-                            </Border>
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="to cancel" />
-                        </StackPanel>
-                        <StackPanel x:Name="ScreenHint" Orientation="Horizontal" Visibility="Collapsed">
-                            <TextBlock VerticalAlignment="Center" Text="Click a display" />
-                            <Ellipse Style="{StaticResource Snappy.Dot}" />
-                            <Border Style="{StaticResource Snappy.Kbd}">
-                                <TextBlock Style="{StaticResource Snappy.KbdText}" Text="Enter" />
-                            </Border>
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="all displays" />
-                            <Ellipse Style="{StaticResource Snappy.Dot}" />
-                            <Border Style="{StaticResource Snappy.Kbd}">
-                                <TextBlock Style="{StaticResource Snappy.KbdText}" Text="Esc" />
-                            </Border>
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="to cancel" />
-                        </StackPanel>
+            <!-- Shadow, rendered once and cached so the sliding pill doesn't make it re-blur. -->
+            <Border CornerRadius="14" Background="{DynamicResource Snappy.Surface}" CacheMode="BitmapCache">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="40" ShadowDepth="12" Direction="270" Opacity="0.45" Color="Black" />
+                </Border.Effect>
+            </Border>
+            <Border Padding="5"
+                    CornerRadius="14"
+                    BorderThickness="1"
+                    Background="{DynamicResource Snappy.Surface}"
+                    BorderBrush="{DynamicResource Snappy.SurfaceEdge}">
+                <StackPanel Orientation="Horizontal">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120" />
+                            <ColumnDefinition Width="120" />
+                            <ColumnDefinition Width="120" />
+                        </Grid.ColumnDefinitions>
+                        <!-- No shadow on the pill: it moves, and a moving shadow re-blurs every frame. -->
+                        <Border x:Name="SegmentPill"
+                                CornerRadius="8"
+                                BorderThickness="1"
+                                Background="{DynamicResource Snappy.SegmentActive}"
+                                BorderBrush="{DynamicResource Snappy.SegmentActiveEdge}">
+                            <Border.RenderTransform>
+                                <TranslateTransform x:Name="PillShift" />
+                            </Border.RenderTransform>
+                        </Border>
+                        <RadioButton x:Name="RegionButton"
+                                     Grid.Column="0"
+                                     Style="{StaticResource Snappy.Segment}"
+                                     Tag="{x:Static overlay:CaptureMode.Region}"
+                                     Click="OnModeClick">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:FaIcon Width="15" Height="15" Glyph="{StaticResource Fa.CropSimple}" />
+                                <TextBlock Margin="9,0,10,0" VerticalAlignment="Center" FontWeight="SemiBold" Text="Region" />
+                                <Border Style="{StaticResource Snappy.Kbd}">
+                                    <TextBlock Style="{StaticResource Snappy.KbdText}" Text="R" />
+                                </Border>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton x:Name="WindowButton"
+                                     Grid.Column="1"
+                                     Style="{StaticResource Snappy.Segment}"
+                                     Tag="{x:Static overlay:CaptureMode.Window}"
+                                     Click="OnModeClick">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:FaIcon Width="15" Height="15" Glyph="{StaticResource Fa.WindowMaximize}" />
+                                <TextBlock Margin="9,0,10,0" VerticalAlignment="Center" FontWeight="SemiBold" Text="Window" />
+                                <Border Style="{StaticResource Snappy.Kbd}">
+                                    <TextBlock Style="{StaticResource Snappy.KbdText}" Text="W" />
+                                </Border>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton x:Name="ScreenButton"
+                                     Grid.Column="2"
+                                     Style="{StaticResource Snappy.Segment}"
+                                     Tag="{x:Static overlay:CaptureMode.Screen}"
+                                     Click="OnModeClick">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:FaIcon Width="15" Height="15" Glyph="{StaticResource Fa.Display}" />
+                                <TextBlock Margin="9,0,10,0" VerticalAlignment="Center" FontWeight="SemiBold" Text="Screen" />
+                                <Border Style="{StaticResource Snappy.Kbd}">
+                                    <TextBlock Style="{StaticResource Snappy.KbdText}" Text="F" />
+                                </Border>
+                            </StackPanel>
+                        </RadioButton>
                     </Grid>
-                </Border>
-            </Grid>
-        </StackPanel>
+                    <Border Width="1" Height="20" Margin="8,0" Background="{DynamicResource Snappy.Divider}" />
+                    <Button Style="{StaticResource Snappy.IconButton}" Click="OnCloseClick">
+                        <ui:FaIcon Width="14" Height="14" Glyph="{StaticResource Fa.Xmark}" />
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>
