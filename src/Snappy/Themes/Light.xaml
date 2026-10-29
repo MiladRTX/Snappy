@@ -1,0 +1,40 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- shadcn/ui "zinc" palette, light. -->
+    <SolidColorBrush x:Key="Snappy.Foreground" Color="#09090B" />
+    <SolidColorBrush x:Key="Snappy.Muted" Color="#F4F4F5" />
+    <SolidColorBrush x:Key="Snappy.MutedForeground" Color="#71717A" />
+    <SolidColorBrush x:Key="Snappy.Border" Color="#E4E4E7" />
+    <SolidColorBrush x:Key="Snappy.Accent" Color="#F4F4F5" />
+    <SolidColorBrush x:Key="Snappy.Primary" Color="#18181B" />
+    <SolidColorBrush x:Key="Snappy.PrimaryForeground" Color="#FAFAFA" />
+    <SolidColorBrush x:Key="Snappy.Destructive" Color="#DC2626" />
+
+    <!-- Floating surfaces (toolbar, cursor card, toast, menu). -->
+    <LinearGradientBrush x:Key="Snappy.Surface" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#FFFFFF" />
+        <GradientStop Offset="1" Color="#F8F8F9" />
+    </LinearGradientBrush>
+    <!-- The same surface, translucent, for laying over a frosted backdrop. -->
+    <LinearGradientBrush x:Key="Snappy.SurfaceGlass" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#E6FFFFFF" />
+        <GradientStop Offset="1" Color="#F0F8F8F9" />
+    </LinearGradientBrush>
+    <!-- 1px rim, slightly darker toward the bottom. -->
+    <LinearGradientBrush x:Key="Snappy.SurfaceEdge" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#12000000" />
+        <GradientStop Offset="1" Color="#24000000" />
+    </LinearGradientBrush>
+
+    <!-- Active segment: a recessed well, like shadcn's light tabs. -->
+    <LinearGradientBrush x:Key="Snappy.SegmentActive" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#EDEDF0" />
+        <GradientStop Offset="1" Color="#F4F4F5" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="Snappy.SegmentActiveEdge" Color="#0F000000" />
+    <SolidColorBrush x:Key="Snappy.SegmentHover" Color="#0A000000" />
+
+    <SolidColorBrush x:Key="Snappy.KbdBackground" Color="#0A000000" />
+    <SolidColorBrush x:Key="Snappy.KbdBorder" Color="#17000000" />
+    <SolidColorBrush x:Key="Snappy.Divider" Color="#17000000" />
+</ResourceDictionary>
