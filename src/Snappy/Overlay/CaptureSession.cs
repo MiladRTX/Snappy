@@ -1,8 +1,11 @@
+using System.Diagnostics;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using Snappy.Capture;
 using Snappy.Geometry;
 using Snappy.Interop;
+using Snappy.Ui;
 
 namespace Snappy.Overlay;
 
@@ -22,9 +25,24 @@ internal sealed class CaptureSession
     /// <summary>How long a click waits for a covered window to render before using the screen instead.</summary>
     static readonly TimeSpan WindowRenderTimeout = TimeSpan.FromSeconds(2);
 
+    /// <summary>
+    /// How long the pointer rests on a covered window before it's rendered for the preview: the
+    /// highlight's move time, so the picture doesn't change mid-move, and windows the pointer only
+    /// passes over aren't rendered at all (each render makes Windows redraw that window).
+    /// </summary>
+    static readonly TimeSpan HoverSettleTime = TimeSpan.FromMilliseconds(160);
+
     readonly List<OverlayWindow> _overlays = [];
     readonly TaskCompletionSource<BitmapSource?> _result = new();
     readonly Dictionary<nint, Task<BitmapSource?>> _windowImages = [];
+
+    // Pointer moves are applied at most once per display refresh. Gaming mice report up to 1000
+    // moves a second; redrawing the card and magnifier for each one asks the render thread for far
+    // more frames than the display shows, until it falls behind and the whole overlay stalls.
+    readonly TimeSpan _pointerInterval = TimeSpan.FromSeconds(1.0 / Motion.FrameRate);
+    readonly Stopwatch _sincePointerUpdate = Stopwatch.StartNew();
+    readonly DispatcherTimer _pendingPointerUpdate;
+
     PhysicalPoint? _dragStart;
     PhysicalRect? _pressedTarget;
     PhysicalRect? _highlight;
@@ -35,6 +53,8 @@ internal sealed class CaptureSession
     {
         Desktop = desktop;
         Mode = mode;
+        _pendingPointerUpdate = new DispatcherTimer(DispatcherPriority.Input) { Interval = _pointerInterval };
+        _pendingPointerUpdate.Tick += (_, _) => UpdatePointer();
     }
 
     public FrozenDesktop Desktop { get; }
@@ -73,7 +93,28 @@ internal sealed class CaptureSession
         PointerMoved(NativeCursor.Position);
     }
 
-    public void PointerMoved(PhysicalPoint p)
+    /// <summary>The mouse moved; the overlays catch up within one display refresh.</summary>
+    public void PointerMovedSoon()
+    {
+        if (_finished) return;
+        if (_sincePointerUpdate.Elapsed >= _pointerInterval) UpdatePointer();
+        else if (!_pendingPointerUpdate.IsEnabled) _pendingPointerUpdate.Start(); // the last move still lands
+    }
+
+    void UpdatePointer()
+    {
+        _pendingPointerUpdate.Stop();
+        _sincePointerUpdate.Restart();
+        PointerMoved(NativeCursor.Position);
+    }
+
+    /// <summary>Applies a waiting pointer move now, so a click acts on what's under the cursor.</summary>
+    void CatchUpPointer()
+    {
+        if (_pendingPointerUpdate.IsEnabled) UpdatePointer();
+    }
+
+    void PointerMoved(PhysicalPoint p)
     {
         if (_finished) return;
         switch (Mode)
@@ -98,6 +139,7 @@ internal sealed class CaptureSession
     public void PointerPressed(PhysicalPoint p)
     {
         if (_finished) return;
+        CatchUpPointer();
         if (Mode == CaptureMode.Region)
         {
             _dragStart = p;
@@ -114,6 +156,7 @@ internal sealed class CaptureSession
     public void PointerReleased(PhysicalPoint p)
     {
         if (_finished) return;
+        CatchUpPointer();
         if (Mode == CaptureMode.Region)
         {
             if (_dragStart is not { } start) return;
@@ -185,6 +228,7 @@ internal sealed class CaptureSession
 
     void CloseOverlays()
     {
+        _pendingPointerUpdate.Stop();
         foreach (var overlay in _overlays) overlay.Close();
     }
 
@@ -196,6 +240,8 @@ internal sealed class CaptureSession
         foreach (var overlay in _overlays) overlay.HideWindowImage();
         if (window is not { IsCovered: true }) return;
 
+        await Task.Delay(HoverSettleTime);
+        if (_finished || window != _hoveredWindow) return;
         var image = await WindowImage(window);
         if (_finished || window != _hoveredWindow || image is null) return;
         var visible = window.Bounds.Intersect(Desktop.Bounds);

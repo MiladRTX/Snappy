@@ -37,7 +37,7 @@
                         Width="96"
                         Height="64"
                         Margin="0,0,12,0"
-                        VerticalAlignment="Top"
+                        VerticalAlignment="Center"
                         CornerRadius="7"
                         BorderThickness="1"
                         BorderBrush="{DynamicResource Snappy.KbdBorder}"
@@ -47,11 +47,19 @@
                         <ImageBrush x:Name="Thumb" Stretch="UniformToFill" />
                     </Border.Background>
                 </Border>
+                <!-- Information from Snappy itself carries its logo; problems get the warning badge below. -->
+                <Image x:Name="Logo"
+                       Width="32"
+                       Height="32"
+                       Margin="0,0,12,0"
+                       VerticalAlignment="Center"
+                       Source="{StaticResource Snappy.Logo}"
+                       Visibility="Collapsed" />
                 <Border x:Name="IconBadge"
                         Width="32"
                         Height="32"
                         Margin="0,0,12,0"
-                        VerticalAlignment="Top"
+                        VerticalAlignment="Center"
                         CornerRadius="8"
                         Background="{DynamicResource Snappy.Muted}"
                         Visibility="Collapsed">

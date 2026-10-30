@@ -22,16 +22,28 @@
         <!-- Dim layer. It never changes while the highlight moves, so it never has to be redrawn. -->
         <Rectangle x:Name="Dim" Fill="Black" Opacity="0" IsHitTestVisible="False" />
 
+        <!-- One pixel that changes imperceptibly every refresh; see KeepFramesSteady. -->
+        <Rectangle x:Name="FramePacer"
+                   Width="1"
+                   Height="1"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Top"
+                   Fill="Black"
+                   Opacity="0.01"
+                   IsHitTestVisible="False" />
+
+        <!--
+            The highlighted area, undimmed: a second copy of the frozen image, laid exactly over the
+            first and clipped to the highlight. Its pixels can't drift against the image below, and
+            moving the clip redraws just the old and new area, not the whole display.
+        -->
+        <Image x:Name="Lit" Stretch="Fill" Visibility="Collapsed" IsHitTestVisible="False" RenderOptions.BitmapScalingMode="NearestNeighbor">
+            <Image.Clip>
+                <RectangleGeometry x:Name="LitClip" />
+            </Image.Clip>
+        </Image>
+
         <Canvas IsHitTestVisible="False">
-            <!--
-                The highlighted area, undimmed: the same frozen pixels, shown only inside the
-                highlight. Moving it redraws just the old and new area, not the whole display.
-            -->
-            <Rectangle x:Name="Lit" Visibility="Collapsed" RenderOptions.BitmapScalingMode="NearestNeighbor">
-                <Rectangle.Fill>
-                    <ImageBrush x:Name="LitBrush" ViewboxUnits="Absolute" Stretch="Fill" />
-                </Rectangle.Fill>
-            </Rectangle>
             <!-- A covered window rendered by itself, over its highlight, as it will be captured. -->
             <Rectangle x:Name="WindowRender" Visibility="Collapsed" RenderOptions.BitmapScalingMode="NearestNeighbor">
                 <Rectangle.Fill>

@@ -40,7 +40,7 @@ internal partial class OverlayWindow : Window
 
         Frozen.Source = session.Desktop.View(monitor.Bounds);
         LoupeBrush.ImageSource = session.Desktop.Image;
-        LitBrush.ImageSource = Frozen.Source;
+        Lit.Source = Frozen.Source;
         OnModeChanged(session.Mode, animate: false);
         WindowPlacement.Pin(this, monitor.Bounds, topmost: true, cloakUntilRendered: true);
 
@@ -61,7 +61,7 @@ internal partial class OverlayWindow : Window
             CaptureMouse(); // keeps mouse events coming while a drag crosses onto another display
             _session.PointerPressed(NativeCursor.Position);
         };
-        MouseMove += (_, _) => _session.PointerMoved(NativeCursor.Position);
+        MouseMove += (_, _) => _session.PointerMovedSoon();
         MouseLeftButtonUp += (_, e) =>
         {
             if (IsMouseCaptured) ReleaseMouseCapture();
@@ -162,7 +162,12 @@ internal partial class OverlayWindow : Window
         CardSecondary.Text = info.Secondary;
         CardSecondary.Visibility = info.Secondary.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
         Swatch.Visibility = info.Color is null ? Visibility.Collapsed : Visibility.Visible;
-        if (info.Color is { } color) Swatch.Background = new SolidColorBrush(color);
+        if (info.Color is { } color)
+        {
+            // One brush, recolored: a new one per move is garbage that piles up into collections.
+            if (Swatch.Background is SolidColorBrush { IsFrozen: false } swatch) swatch.Color = color;
+            else Swatch.Background = new SolidColorBrush(color);
+        }
         Loupe.Visibility = info.ShowLoupe ? Visibility.Visible : Visibility.Collapsed;
         if (info.ShowLoupe)
         {
@@ -195,12 +200,31 @@ internal partial class OverlayWindow : Window
     void PlayIntro()
     {
         WindowPlacement.Uncloak(this);
+        KeepFramesSteady();
         // The frozen image matches the real screen, so this reads as the screen itself dimming.
         Dim.BeginAnimation(OpacityProperty, Motion.Enter(0, DimOpacity, 240));
         if (!_hostsToolbar) return;
         Toolbar.Visibility = Visibility.Visible;
         Toolbar.BeginAnimation(OpacityProperty, Motion.Enter(0, 1, 260));
         ToolbarShift.BeginAnimation(TranslateTransform.YProperty, Motion.Enter(-16, 0, 480));
+    }
+
+    /// <summary>
+    /// Has this window present a frame every display refresh while it's open. With variable
+    /// refresh rate (FreeSync, G-Sync) the display's refresh follows how often a full-screen window
+    /// presents: a still overlay lets it sink, moving the mouse sends it back up, and those swings
+    /// show as brightness flicker across the dark dim. One black pixel at the corner, changing
+    /// between 1% and 2% opacity, keeps frames coming without anything visible changing.
+    /// </summary>
+    void KeepFramesSteady()
+    {
+        var pace = new DoubleAnimation(0.01, 0.02, TimeSpan.FromSeconds(1))
+        {
+            AutoReverse = true,
+            RepeatBehavior = RepeatBehavior.Forever,
+        };
+        Timeline.SetDesiredFrameRate(pace, Motion.FrameRate);
+        FramePacer.BeginAnimation(OpacityProperty, pace);
     }
 
     void FadeSegment(RadioButton button, double opacity)
@@ -210,19 +234,14 @@ internal partial class OverlayWindow : Window
 
     void RenderHighlight()
     {
-        var r = Highlight;
+        double scale = Scale;
+        var r = SnapToPixels(Highlight, scale);
         bool visible = HasArea(r);
         Lit.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         SelectionBorder.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         if (!visible) return;
 
-        // The undimmed area shows the frozen pixels under it, one image pixel per screen pixel.
-        double scale = Scale;
-        Canvas.SetLeft(Lit, r.X);
-        Canvas.SetTop(Lit, r.Y);
-        Lit.Width = r.Width;
-        Lit.Height = r.Height;
-        LitBrush.Viewbox = new Rect(r.X * scale, r.Y * scale, r.Width * scale, r.Height * scale);
+        LitClip.Rect = r;
 
         // Exactly 1 (or 2) physical pixels thick. Drawn outside the area so the border never
         // covers captured pixels, except for whole displays where outside is off-screen.
@@ -257,4 +276,18 @@ internal partial class OverlayWindow : Window
     bool IsFromToolbar(MouseEventArgs e) => e.OriginalSource is Visual source && Toolbar.IsAncestorOf(source);
 
     static bool HasArea(Rect r) => r.Width > 0 && r.Height > 0;
+
+    /// <summary>
+    /// <paramref name="r"/> (DIPs) with every edge moved to the nearest screen pixel, so the
+    /// highlight and its border never straddle pixels, not even halfway through an animation.
+    /// </summary>
+    internal static Rect SnapToPixels(Rect r, double scale)
+    {
+        if (!HasArea(r)) return Rect.Empty;
+        double left = Math.Round(r.Left * scale), top = Math.Round(r.Top * scale);
+        double right = Math.Round(r.Right * scale), bottom = Math.Round(r.Bottom * scale);
+        return right > left && bottom > top
+            ? new Rect(left / scale, top / scale, (right - left) / scale, (bottom - top) / scale)
+            : Rect.Empty;
+    }
 }

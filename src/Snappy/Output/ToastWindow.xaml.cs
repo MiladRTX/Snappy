@@ -93,9 +93,16 @@ internal partial class ToastWindow : Window
     public static void ShowMessage(string title, string message, ToastKind kind = ToastKind.Info)
     {
         var toast = new ToastWindow(TimeSpan.FromSeconds(kind == ToastKind.Error ? 8 : 4));
-        toast.IconBadge.Visibility = Visibility.Visible;
-        toast.IconGlyph.Glyph = (Glyph)toast.FindResource(kind == ToastKind.Error ? "Icon.Warning" : "Icon.Region");
-        if (kind == ToastKind.Error) toast.IconGlyph.SetResourceReference(ForegroundProperty, "Snappy.Destructive");
+        if (kind == ToastKind.Error)
+        {
+            toast.IconBadge.Visibility = Visibility.Visible;
+            toast.IconGlyph.Glyph = (Glyph)toast.FindResource("Icon.Warning");
+            toast.IconGlyph.SetResourceReference(ForegroundProperty, "Snappy.Destructive");
+        }
+        else
+        {
+            toast.Logo.Visibility = Visibility.Visible;
+        }
         toast.TitleText.Text = title;
         toast.MessageText.Text = message;
         toast.Present();
