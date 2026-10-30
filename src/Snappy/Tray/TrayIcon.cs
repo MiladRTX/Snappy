@@ -12,23 +12,11 @@ namespace Snappy.Tray;
 internal sealed class TrayIcon : IDisposable
 {
     readonly Forms.NotifyIcon _icon;
-    readonly ContextMenu _menu;
-    readonly Dictionary<HotkeyAction, MenuItem> _captureItems = [];
+    Func<HotkeyAction, string?> _gestureFor = _ => null;
+    ContextMenu? _menu;
 
     public TrayIcon()
     {
-        _menu = new ContextMenu { Placement = PlacementMode.MousePoint };
-        _menu.SetResourceReference(FrameworkElement.StyleProperty, "Snappy.Menu");
-        AddCaptureItem(HotkeyAction.CaptureRegion, "Icon.Region");
-        AddCaptureItem(HotkeyAction.CaptureWindow, "Icon.Window");
-        AddCaptureItem(HotkeyAction.CaptureScreen, "Icon.Display");
-        AddCaptureItem(HotkeyAction.CaptureAllDisplays, "Icon.AllDisplays");
-        AddSeparator();
-        AddItem("Open captures folder", "Icon.Folder", () => OpenFolderRequested?.Invoke());
-        AddItem("Settings", "Icon.Settings", () => OpenSettingsRequested?.Invoke());
-        AddSeparator();
-        AddItem("Quit Snappy", "Icon.Quit", () => ExitRequested?.Invoke());
-
         _icon = new Forms.NotifyIcon { Icon = LoadIcon(), Text = "Snappy", Visible = true };
         _icon.MouseUp += OnIconMouseUp;
     }
@@ -38,32 +26,53 @@ internal sealed class TrayIcon : IDisposable
     public event Action? OpenSettingsRequested;
     public event Action? ExitRequested;
 
-    /// <summary>Shows each capture item's shortcut, and the region shortcut in the tooltip.</summary>
+    /// <summary>Where the menu gets each capture item's shortcut; the region shortcut also goes in the tooltip.</summary>
     public void SetHotkeys(Func<HotkeyAction, string?> gestureFor)
     {
-        foreach (var (action, item) in _captureItems) item.InputGestureText = gestureFor(action) ?? "";
+        _gestureFor = gestureFor;
         var region = gestureFor(HotkeyAction.CaptureRegion);
         _icon.Text = region is null ? "Snappy" : $"Snappy: {region} to capture";
     }
 
-    void AddCaptureItem(HotkeyAction action, string iconKey) =>
-        _captureItems[action] = AddItem(HotkeyActions.Label(action), iconKey, () => ActionRequested?.Invoke(action));
+    /// <summary>
+    /// Built fresh each time it opens. The menu belongs to no window, and WPF passes a switch
+    /// between the light and dark palettes only to windows, so a menu kept around would keep the
+    /// colors it started with. A new one always has the current colors and shortcuts.
+    /// </summary>
+    ContextMenu BuildMenu()
+    {
+        var menu = new ContextMenu { Placement = PlacementMode.MousePoint };
+        menu.SetResourceReference(FrameworkElement.StyleProperty, "Snappy.Menu");
+        AddCaptureItem(menu, HotkeyAction.CaptureRegion, "Icon.Region");
+        AddCaptureItem(menu, HotkeyAction.CaptureWindow, "Icon.Window");
+        AddCaptureItem(menu, HotkeyAction.CaptureScreen, "Icon.Display");
+        AddCaptureItem(menu, HotkeyAction.CaptureAllDisplays, "Icon.AllDisplays");
+        AddSeparator(menu);
+        AddItem(menu, "Open captures folder", "Icon.Folder", () => OpenFolderRequested?.Invoke());
+        AddItem(menu, "Settings", "Icon.Settings", () => OpenSettingsRequested?.Invoke());
+        AddSeparator(menu);
+        AddItem(menu, "Quit Snappy", "Icon.Quit", () => ExitRequested?.Invoke());
+        return menu;
+    }
+
+    void AddCaptureItem(ContextMenu menu, HotkeyAction action, string iconKey) =>
+        AddItem(menu, HotkeyActions.Label(action), iconKey, () => ActionRequested?.Invoke(action)).InputGestureText = _gestureFor(action) ?? "";
 
     /// <summary>Adds a menu item; <paramref name="iconKey"/> names an icon in Themes/Icons.xaml.</summary>
-    MenuItem AddItem(string header, string iconKey, Action onClick)
+    static MenuItem AddItem(ContextMenu menu, string header, string iconKey, Action onClick)
     {
         var item = new MenuItem { Header = header, Tag = Application.Current.FindResource(iconKey) };
         item.SetResourceReference(FrameworkElement.StyleProperty, "Snappy.MenuItem");
         item.Click += (_, _) => onClick();
-        _menu.Items.Add(item);
+        menu.Items.Add(item);
         return item;
     }
 
-    void AddSeparator()
+    static void AddSeparator(ContextMenu menu)
     {
         var separator = new Separator();
         separator.SetResourceReference(FrameworkElement.StyleProperty, "Snappy.MenuSeparator");
-        _menu.Items.Add(separator);
+        menu.Items.Add(separator);
     }
 
     void OnIconMouseUp(object? sender, Forms.MouseEventArgs e)
@@ -74,6 +83,8 @@ internal sealed class TrayIcon : IDisposable
 
     void ShowMenu()
     {
+        if (_menu is { IsOpen: true }) return;
+        _menu = BuildMenu();
         _menu.IsOpen = true;
         // Without a foreground window the menu never sees the outside click that should close it.
         if (PresentationSource.FromVisual(_menu) is HwndSource source) NativeMethods.SetForegroundWindow(source.Handle);
@@ -88,7 +99,7 @@ internal sealed class TrayIcon : IDisposable
 
     public void Dispose()
     {
-        _menu.IsOpen = false;
+        if (_menu is not null) _menu.IsOpen = false;
         _icon.Visible = false;
         _icon.Icon?.Dispose();
         _icon.Dispose();
