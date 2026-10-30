@@ -52,7 +52,9 @@ Each capture is copied to the clipboard (PNG and bitmap) and saved as a lossless
 Open **Settings** from the tray menu (or launch Snappy again). Changes are saved and applied as
 you make them:
 
-- **General**: start with Windows, the capture notification, and light/dark/system appearance.
+- **General**: start with Windows (quietly, in the tray; the switch shows whether this copy of
+  Snappy really starts, including when Windows' Startup apps list has turned it off), the capture
+  notification, and light/dark/system appearance.
 - **Capture**: copy to clipboard, save to a file, the save folder and the file name pattern
   (with a live preview).
 - **Shortcuts**: record a global shortcut for each of region, window, display and all displays.

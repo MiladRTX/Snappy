@@ -66,7 +66,7 @@ internal partial class SettingsWindow : Window
 
     void ShowSettings()
     {
-        StartupSwitch.IsChecked = StartWithWindows.IsEnabled;
+        ShowStartup();
         NotifySwitch.IsChecked = _settings.ShowNotification;
         SystemTheme.IsChecked = _settings.Theme == "System";
         LightTheme.IsChecked = _settings.Theme == "Light";
@@ -101,9 +101,24 @@ internal partial class SettingsWindow : Window
         }
         catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException)
         {
-            StartupSwitch.IsChecked = StartWithWindows.IsEnabled;
             ToastWindow.ShowMessage("Couldn't change startup", ex.Message, ToastKind.Error);
         }
+        ShowStartup();
+    }
+
+    /// <summary>The switch is on only when this copy will really start; otherwise the note says why not.</summary>
+    void ShowStartup()
+    {
+        var state = StartWithWindows.State;
+        StartupSwitch.IsChecked = state == StartupState.On;
+        StartupNote.Text = state switch
+        {
+            StartupState.TurnedOffInWindows => "Turned off in Windows Settings › Apps › Startup. Switch it on here to turn it back on.",
+            StartupState.OtherCopy => $"Windows starts another copy: {StartWithWindows.RegisteredExe}. Switch on to start this one instead.",
+            StartupState.MissingCopy => $"Windows would start {StartWithWindows.RegisteredExe}, which no longer exists. Switch on to start this copy.",
+            _ => "",
+        };
+        StartupNote.Visibility = StartupNote.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     void OnNotifyClick(object sender, RoutedEventArgs e)

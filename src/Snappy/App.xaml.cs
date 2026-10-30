@@ -63,10 +63,18 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        bool HasArgument(string name) => e.Args.Any(arg => arg.Equals(name, StringComparison.OrdinalIgnoreCase));
+        bool atSignIn = HasArgument(StartWithWindows.StartupArgument);
+
         _instance = new Mutex(initiallyOwned: true, InstanceName, out _ownsInstance);
         if (!_ownsInstance)
         {
-            bool capture = e.Args.Any(arg => arg.Equals("--capture", StringComparison.OrdinalIgnoreCase));
+            if (atSignIn)
+            {
+                Shutdown(); // already running; sign-in shouldn't pop up the settings window
+                return;
+            }
+            bool capture = HasArgument("--capture");
             NativeMethods.AllowSetForegroundWindow(NativeMethods.ASFW_ANY); // so the settings window can come to the front
             if (EventWaitHandle.TryOpenExisting(capture ? CaptureSignalName : OpenSignalName, out var signal))
             {
@@ -101,7 +109,17 @@ public partial class App : Application
         ListenForSignal(CaptureSignalName, () => _ = RunAsync(HotkeyAction.CaptureRegion));
         WatchSettings();
 
-        if (hotkeysOk)
+        try
+        {
+            StartWithWindows.Maintain();
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException)
+        {
+            // Startup keeps whatever entry it has; nothing else depends on this.
+        }
+
+        // Started by Windows at sign-in: stay quiet in the tray. Problems (above) still show.
+        if (hotkeysOk && !atSignIn)
         {
             var region = _hotkeys.GestureFor(HotkeyAction.CaptureRegion);
             ToastWindow.ShowMessage("Snappy is running", region is null

@@ -135,7 +135,8 @@
                                 <CheckBox x:Name="StartupSwitch" DockPanel.Dock="Right" Style="{StaticResource Snappy.Switch}" Click="OnStartupClick" />
                                 <StackPanel>
                                     <TextBlock Style="{StaticResource Snappy.RowTitle}" Text="Start with Windows" />
-                                    <TextBlock Style="{StaticResource Snappy.RowHint}" Text="Launch Snappy in the tray when you sign in." />
+                                    <TextBlock Style="{StaticResource Snappy.RowHint}" Text="Launch Snappy quietly in the tray when you sign in." />
+                                    <TextBlock x:Name="StartupNote" Style="{StaticResource Snappy.RowHint}" Margin="0,4,24,0" Visibility="Collapsed" />
                                 </StackPanel>
                             </DockPanel>
                             <Border Style="{StaticResource Snappy.RowDivider}" />
