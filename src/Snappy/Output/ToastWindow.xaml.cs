@@ -94,7 +94,7 @@ internal partial class ToastWindow : Window
     {
         var toast = new ToastWindow(TimeSpan.FromSeconds(kind == ToastKind.Error ? 8 : 4));
         toast.IconBadge.Visibility = Visibility.Visible;
-        toast.IconGlyph.Glyph = (FaGlyph)toast.FindResource(kind == ToastKind.Error ? "Fa.CircleExclamation" : "Fa.CropSimple");
+        toast.IconGlyph.Glyph = (Glyph)toast.FindResource(kind == ToastKind.Error ? "Icon.Warning" : "Icon.Region");
         if (kind == ToastKind.Error) toast.IconGlyph.SetResourceReference(ForegroundProperty, "Snappy.Destructive");
         toast.TitleText.Text = title;
         toast.MessageText.Text = message;

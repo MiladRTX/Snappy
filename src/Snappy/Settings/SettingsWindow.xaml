@@ -95,25 +95,25 @@
                 <StackPanel>
                     <RadioButton Style="{StaticResource Snappy.NavItem}" Tag="{Binding ElementName=GeneralPage}" IsChecked="True" Checked="OnPageChecked">
                         <StackPanel Orientation="Horizontal">
-                            <ui:FaIcon Width="14" Height="14" Glyph="{StaticResource Fa.Gear}" />
+                            <ui:GlyphIcon Width="14" Height="14" Glyph="{StaticResource Icon.Settings}" />
                             <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" Text="General" />
                         </StackPanel>
                     </RadioButton>
                     <RadioButton Style="{StaticResource Snappy.NavItem}" Tag="{Binding ElementName=CapturePage}" Checked="OnPageChecked">
                         <StackPanel Orientation="Horizontal">
-                            <ui:FaIcon Width="14" Height="14" Glyph="{StaticResource Fa.CropSimple}" />
+                            <ui:GlyphIcon Width="14" Height="14" Glyph="{StaticResource Icon.Region}" />
                             <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" Text="Capture" />
                         </StackPanel>
                     </RadioButton>
                     <RadioButton Style="{StaticResource Snappy.NavItem}" Tag="{Binding ElementName=ShortcutsPage}" Checked="OnPageChecked">
                         <StackPanel Orientation="Horizontal">
-                            <ui:FaIcon Width="14" Height="14" Glyph="{StaticResource Fa.Keyboard}" />
+                            <ui:GlyphIcon Width="14" Height="14" Glyph="{StaticResource Icon.Keyboard}" />
                             <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" Text="Shortcuts" />
                         </StackPanel>
                     </RadioButton>
                     <RadioButton Style="{StaticResource Snappy.NavItem}" Tag="{Binding ElementName=AboutPage}" Checked="OnPageChecked">
                         <StackPanel Orientation="Horizontal">
-                            <ui:FaIcon Width="14" Height="14" Glyph="{StaticResource Fa.CircleInfo}" />
+                            <ui:GlyphIcon Width="14" Height="14" Glyph="{StaticResource Icon.Info}" />
                             <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" Text="About" />
                         </StackPanel>
                     </RadioButton>
@@ -307,19 +307,19 @@
                             <WrapPanel>
                                 <Button Margin="0,0,8,8" Style="{StaticResource Snappy.PrimaryButton}" Click="OnGitHubClick">
                                     <StackPanel Orientation="Horizontal">
-                                        <ui:FaIcon Width="13" Height="13" Glyph="{StaticResource Fa.GitHub}" />
+                                        <ui:GlyphIcon Width="13" Height="13" Glyph="{StaticResource Icon.GitHub}" />
                                         <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Text="GitHub" />
                                     </StackPanel>
                                 </Button>
                                 <Button Margin="0,0,8,8" Style="{StaticResource Snappy.OutlineButton}" Click="OnOpenFolderClick">
                                     <StackPanel Orientation="Horizontal">
-                                        <ui:FaIcon Width="13" Height="13" Glyph="{StaticResource Fa.FolderOpen}" />
+                                        <ui:GlyphIcon Width="13" Height="13" Glyph="{StaticResource Icon.Folder}" />
                                         <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Text="Captures folder" />
                                     </StackPanel>
                                 </Button>
                                 <Button Margin="0,0,8,8" Style="{StaticResource Snappy.OutlineButton}" Click="OnSettingsFileClick">
                                     <StackPanel Orientation="Horizontal">
-                                        <ui:FaIcon Width="13" Height="13" Glyph="{StaticResource Fa.FileLines}" />
+                                        <ui:GlyphIcon Width="13" Height="13" Glyph="{StaticResource Icon.File}" />
                                         <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Text="Settings file" />
                                     </StackPanel>
                                 </Button>
@@ -330,7 +330,7 @@
                         <DockPanel Style="{StaticResource Snappy.Row}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource Snappy.RowTitle}" Text="Credits" />
-                                <TextBlock Style="{StaticResource Snappy.RowHint}" Text="Icons from Font Awesome Free 7.3.1 by Fonticons, Inc., licensed under CC BY 4.0." />
+                                <TextBlock Style="{StaticResource Snappy.RowHint}" Text="Icons from Phosphor Icons (phosphoricons.com), © 2023 Phosphor Icons, MIT License." />
                             </StackPanel>
                         </DockPanel>
                     </Border>

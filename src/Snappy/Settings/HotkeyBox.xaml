@@ -21,7 +21,7 @@
                     DockPanel.Dock="Right"
                     Style="{StaticResource Snappy.IconButton}"
                     Click="OnClearClick">
-                <ui:FaIcon Width="10" Height="10" Glyph="{StaticResource Fa.Xmark}" />
+                <ui:GlyphIcon Width="10" Height="10" Glyph="{StaticResource Icon.Close}" />
             </Button>
             <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
                 <StackPanel x:Name="Keys" Orientation="Horizontal" />

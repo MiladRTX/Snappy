@@ -102,7 +102,6 @@ Includes a real capture of the machine's displays, checked against each display'
 
 ## Credits
 
-Icons are from [Font Awesome Free](https://fontawesome.com) 7.3.1 by Fonticons, Inc., licensed
-under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) (see
-[fontawesome.com/license/free](https://fontawesome.com/license/free)). Their path data is used
-unchanged in `src/Snappy/Themes/Icons.xaml`.
+Icons are from [Phosphor Icons](https://phosphoricons.com) 2.1.1 (bold weight), © 2023 Phosphor
+Icons, under the MIT License (see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)). Their path
+data is used unchanged in `src/Snappy/Themes/Icons.xaml`.

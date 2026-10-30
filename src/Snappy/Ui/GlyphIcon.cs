@@ -5,15 +5,15 @@ using System.Windows.Media;
 namespace Snappy.Ui;
 
 /// <summary>
-/// One Font Awesome icon: its outline and the size of the canvas it was drawn on (the SVG
-/// viewBox). The icons are defined in Themes/Icons.xaml.
+/// One icon: its outline and the size of the canvas it was drawn on (the SVG viewBox). The
+/// icons are defined in Themes/Icons.xaml.
 /// </summary>
-public sealed class FaGlyph
+public sealed class Glyph
 {
     // Spelled out: inside Snappy.*, a bare "Geometry" means the Snappy.Geometry namespace.
     public System.Windows.Media.Geometry Data { get; set; } = System.Windows.Media.Geometry.Empty;
-    public double Width { get; set; } = 512;
-    public double Height { get; set; } = 512;
+    public double Width { get; set; } = 256;
+    public double Height { get; set; } = 256;
 
     GuidelineSet? _edges;
 
@@ -21,13 +21,19 @@ public sealed class FaGlyph
     /// The x of every vertical and the y of every horizontal straight edge, so the renderer can
     /// put each one on a pixel boundary (crisp strokes instead of a gray half-covered column).
     /// </summary>
-    internal GuidelineSet Edges => _edges ??= FindEdges(Data);
+    internal GuidelineSet Edges => _edges ??= FindEdges(Data, minLength: Math.Max(Width, Height) / 32);
 
-    static GuidelineSet FindEdges(System.Windows.Media.Geometry data)
+    /// <param name="minLength">In viewBox units; shorter flats are the ends of curves.</param>
+    static GuidelineSet FindEdges(System.Windows.Media.Geometry data, double minLength)
     {
-        const double minLength = 16; // in viewBox units; shorter flats are the ends of curves
         var xs = new SortedSet<double>();
         var ys = new SortedSet<double>();
+        void AddEdge(Point from, Point to)
+        {
+            if (Math.Abs(to.X - from.X) < 0.01 && Math.Abs(to.Y - from.Y) >= minLength) xs.Add(Math.Round(to.X, 2));
+            if (Math.Abs(to.Y - from.Y) < 0.01 && Math.Abs(to.X - from.X) >= minLength) ys.Add(Math.Round(to.Y, 2));
+        }
+
         foreach (var figure in PathGeometry.CreateFromGeometry(data).Figures)
         {
             var from = figure.StartPoint;
@@ -41,8 +47,7 @@ public sealed class FaGlyph
                 };
                 foreach (var to in points)
                 {
-                    if (Math.Abs(to.X - from.X) < 0.01 && Math.Abs(to.Y - from.Y) >= minLength) xs.Add(Math.Round(to.X, 2));
-                    if (Math.Abs(to.Y - from.Y) < 0.01 && Math.Abs(to.X - from.X) >= minLength) ys.Add(Math.Round(to.Y, 2));
+                    AddEdge(from, to);
                     from = to;
                 }
                 from = segment switch
@@ -55,6 +60,7 @@ public sealed class FaGlyph
                     _ => from,
                 };
             }
+            if (figure.IsClosed) AddEdge(from, figure.StartPoint); // "Z" draws a line back to the start
         }
         var edges = new GuidelineSet([.. xs], [.. ys]);
         edges.Freeze();
@@ -63,24 +69,25 @@ public sealed class FaGlyph
 }
 
 /// <summary>
-/// Draws a <see cref="FaGlyph"/> in the surrounding text color, scaled to fit while keeping the
-/// icon's own proportions and padding, so icons of different widths line up like font glyphs.
+/// Draws a <see cref="Snappy.Ui.Glyph"/> in the surrounding text color, scaled to fit while
+/// keeping the icon's own proportions and padding, so icons of different widths line up like
+/// font glyphs.
 /// </summary>
-public sealed class FaIcon : FrameworkElement
+public sealed class GlyphIcon : FrameworkElement
 {
     public static readonly DependencyProperty GlyphProperty = DependencyProperty.Register(
-        nameof(Glyph), typeof(FaGlyph), typeof(FaIcon),
+        nameof(Glyph), typeof(Glyph), typeof(GlyphIcon),
         new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
 
     /// <summary>Inherited like text color, so hover and theme changes reach the icon too.</summary>
     public static readonly DependencyProperty ForegroundProperty = TextElement.ForegroundProperty.AddOwner(
-        typeof(FaIcon),
+        typeof(GlyphIcon),
         new FrameworkPropertyMetadata(SystemColors.ControlTextBrush,
             FrameworkPropertyMetadataOptions.Inherits | FrameworkPropertyMetadataOptions.AffectsRender));
 
-    public FaGlyph? Glyph
+    public Glyph? Glyph
     {
-        get => (FaGlyph?)GetValue(GlyphProperty);
+        get => (Glyph?)GetValue(GlyphProperty);
         set => SetValue(GlyphProperty, value);
     }
 

@@ -19,15 +19,15 @@ internal sealed class TrayIcon : IDisposable
     {
         _menu = new ContextMenu { Placement = PlacementMode.MousePoint };
         _menu.SetResourceReference(FrameworkElement.StyleProperty, "Snappy.Menu");
-        AddCaptureItem(HotkeyAction.CaptureRegion, "Fa.CropSimple");
-        AddCaptureItem(HotkeyAction.CaptureWindow, "Fa.WindowMaximize");
-        AddCaptureItem(HotkeyAction.CaptureScreen, "Fa.Display");
-        AddCaptureItem(HotkeyAction.CaptureAllDisplays, "Fa.Expand");
+        AddCaptureItem(HotkeyAction.CaptureRegion, "Icon.Region");
+        AddCaptureItem(HotkeyAction.CaptureWindow, "Icon.Window");
+        AddCaptureItem(HotkeyAction.CaptureScreen, "Icon.Display");
+        AddCaptureItem(HotkeyAction.CaptureAllDisplays, "Icon.AllDisplays");
         AddSeparator();
-        AddItem("Open captures folder", "Fa.FolderOpen", () => OpenFolderRequested?.Invoke());
-        AddItem("Settings", "Fa.Gear", () => OpenSettingsRequested?.Invoke());
+        AddItem("Open captures folder", "Icon.Folder", () => OpenFolderRequested?.Invoke());
+        AddItem("Settings", "Icon.Settings", () => OpenSettingsRequested?.Invoke());
         AddSeparator();
-        AddItem("Quit Snappy", "Fa.PowerOff", () => ExitRequested?.Invoke());
+        AddItem("Quit Snappy", "Icon.Quit", () => ExitRequested?.Invoke());
 
         _icon = new Forms.NotifyIcon { Icon = LoadIcon(), Text = "Snappy", Visible = true };
         _icon.MouseUp += OnIconMouseUp;

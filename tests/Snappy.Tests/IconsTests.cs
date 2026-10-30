@@ -8,8 +8,8 @@ public class IconsTests
 {
     static readonly string[] UsedIcons =
     [
-        "Fa.CropSimple", "Fa.WindowMaximize", "Fa.Display", "Fa.Expand", "Fa.FolderOpen",
-        "Fa.Gear", "Fa.PowerOff", "Fa.CircleExclamation", "Fa.Xmark",
+        "Icon.Region", "Icon.Window", "Icon.Display", "Icon.AllDisplays", "Icon.Folder", "Icon.Settings",
+        "Icon.Quit", "Icon.Warning", "Icon.Close", "Icon.Keyboard", "Icon.Info", "Icon.File", "Icon.GitHub",
     ];
 
     static ResourceDictionary LoadIcons()
@@ -23,17 +23,18 @@ public class IconsTests
     {
         var icons = LoadIcons();
 
-        foreach (var key in UsedIcons) Assert.IsType<FaGlyph>(icons[key]);
+        foreach (var key in UsedIcons) Assert.IsType<Glyph>(icons[key]);
     }
 
     [Fact]
     public void Straight_edges_are_found_for_pixel_snapping()
     {
-        var window = Assert.IsType<FaGlyph>(LoadIcons()["Fa.WindowMaximize"]);
+        var window = Assert.IsType<Glyph>(LoadIcons()["Icon.Window"]);
 
-        // The outline's sides, top and bottom, and the slot in the title bar; not the rounded corners.
-        Assert.Equal([0d, 512], window.Edges.GuidelinesX);
-        Assert.Equal([64d, 128, 176, 448], window.Edges.GuidelinesY);
+        // The frame's outer and inner sides, including the inner one "Z" closes; not the rounded
+        // corners or the two round dots.
+        Assert.Equal([20d, 44, 212, 236], window.Edges.GuidelinesX);
+        Assert.Equal([36d, 60, 196, 220], window.Edges.GuidelinesY);
     }
 
     [Fact]
@@ -41,13 +42,11 @@ public class IconsTests
     {
         foreach (var key in LoadIcons().Keys)
         {
-            var glyph = Assert.IsType<FaGlyph>(LoadIcons()[key]);
+            var glyph = Assert.IsType<Glyph>(LoadIcons()[key]);
             var bounds = glyph.Data.Bounds;
 
             Assert.False(bounds.IsEmpty, $"{key} has no shape");
-            // Font Awesome 7 lets some icons overhang their box slightly (the gear's teeth).
-            double overhang = glyph.Height / 16;
-            var box = new Rect(-overhang, -overhang, glyph.Width + 2 * overhang, glyph.Height + 2 * overhang);
+            var box = new Rect(0, 0, glyph.Width, glyph.Height);
             Assert.True(box.Contains(bounds), $"{key} spills outside its {glyph.Width} x {glyph.Height} box: {bounds}");
         }
     }
