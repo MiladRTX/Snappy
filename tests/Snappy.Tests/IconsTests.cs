@@ -27,6 +27,16 @@ public class IconsTests
     }
 
     [Fact]
+    public void Straight_edges_are_found_for_pixel_snapping()
+    {
+        var window = Assert.IsType<FaGlyph>(LoadIcons()["Fa.WindowMaximize"]);
+
+        // The outline's sides, top and bottom, and the slot in the title bar; not the rounded corners.
+        Assert.Equal([0d, 512], window.Edges.GuidelinesX);
+        Assert.Equal([64d, 128, 176, 448], window.Edges.GuidelinesY);
+    }
+
+    [Fact]
     public void Every_icon_parses_and_fits_its_viewbox()
     {
         foreach (var key in LoadIcons().Keys)

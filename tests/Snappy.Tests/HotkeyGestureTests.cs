@@ -49,9 +49,21 @@ public class HotkeyGestureTests
     [InlineData("F9", true)]
     [InlineData("F24", true)]
     [InlineData("PrintScreen", true)]
+    [InlineData("Insert", true)]
+    [InlineData("Pause", true)]
+    [InlineData("Scroll", true)]
+    [InlineData("Apps", true)]
+    [InlineData("Ctrl+Space", true)]
     [InlineData("S", false)]       // would break typing "s" in every app
-    [InlineData("Insert", false)]
+    [InlineData("7", false)]
+    [InlineData("NumPad5", false)]
+    [InlineData("OemComma", false)]
     [InlineData("Space", false)]
+    [InlineData("Enter", false)]
+    [InlineData("Home", false)]
+    [InlineData("PageDown", false)]
+    [InlineData("Left", false)]
+    [InlineData("CapsLock", false)]
     public void Only_shortcuts_that_leave_typing_alone_are_suitable_globally(string text, bool suitable)
     {
         Assert.True(HotkeyGesture.TryParse(text, out var gesture));

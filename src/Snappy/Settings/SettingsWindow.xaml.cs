@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using Microsoft.Win32;
 using Snappy.Hotkeys;
 using Snappy.Interop;
@@ -117,7 +118,7 @@ internal partial class SettingsWindow : Window
         Save();
     }
 
-    void MatchTitleBar() => TitleBar.SetDark(this, Theme.IsDark);
+    void MatchTitleBar() => TitleBar.Match(this, Theme.IsDark, ((SolidColorBrush)FindResource("Snappy.Background")).Color);
 
     // Capture
 

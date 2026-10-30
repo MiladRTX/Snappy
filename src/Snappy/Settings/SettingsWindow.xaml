@@ -80,7 +80,7 @@
         <Border Background="{DynamicResource Snappy.Sidebar}" BorderBrush="{DynamicResource Snappy.Border}" BorderThickness="0,0,1,0">
             <DockPanel Margin="12,18,12,14">
                 <StackPanel Margin="8,0,0,22" DockPanel.Dock="Top" Orientation="Horizontal">
-                    <Image Width="30" Height="30" Source="pack://application:,,,/Assets/snappy.ico" RenderOptions.BitmapScalingMode="HighQuality" />
+                    <Image Width="30" Height="30" Source="{StaticResource Snappy.Logo}" />
                     <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
                         <TextBlock FontSize="15" FontWeight="SemiBold" Text="Snappy" />
                         <TextBlock x:Name="VersionText" FontSize="11.5" Foreground="{DynamicResource Snappy.MutedForeground}" />
@@ -219,7 +219,7 @@
                 <!-- Shortcuts -->
                 <StackPanel x:Name="ShortcutsPage" Visibility="Collapsed">
                     <TextBlock Style="{StaticResource Snappy.PageTitle}" Text="Shortcuts" />
-                    <TextBlock Style="{StaticResource Snappy.PageHint}" Text="Global shortcuts work from any app. Click one, then press the keys you want. Backspace removes it." />
+                    <TextBlock Style="{StaticResource Snappy.PageHint}" Text="Global shortcuts work from any app. Click one, then press the keys you want: a single key like Insert or F9, or a combination. Keys you type with need Ctrl, Alt, Shift or Win. Backspace removes a shortcut." />
                     <Border Style="{StaticResource Snappy.Card}">
                         <StackPanel>
                             <DockPanel Style="{StaticResource Snappy.Row}">
@@ -293,7 +293,7 @@
                     <Border Padding="24" Style="{StaticResource Snappy.Card}">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal">
-                                <Image Width="56" Height="56" Source="pack://application:,,,/Assets/snappy.ico" RenderOptions.BitmapScalingMode="HighQuality" />
+                                <Image Width="56" Height="56" Source="{StaticResource Snappy.Logo}" />
                                 <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
                                     <TextBlock FontSize="20" FontWeight="SemiBold" Text="Snappy" />
                                     <TextBlock x:Name="AboutVersionText" Margin="0,2,0,0" FontSize="12.5" Foreground="{DynamicResource Snappy.MutedForeground}" />

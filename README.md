@@ -59,8 +59,11 @@ picks up changes as soon as the file is saved.
 | `showNotification` | `true` | errors are always shown |
 | `theme` | `System` | `System`, `Light` or `Dark` |
 
-Shortcuts need a modifier (`Ctrl`, `Alt`, `Shift` or `Win`) unless they're a function key or
-`PrintScreen`, so they can't hijack normal typing.
+A single key works as a shortcut (`Insert`, `F9`, `PrintScreen`, `Pause`...) as long as it isn't one
+you type or move through text with: letters, digits, punctuation, `Space`, `Enter`, `Tab`, the
+arrows, `Home`/`End`/`Page Up`/`Page Down` and the like need a modifier (`Ctrl`, `Alt`, `Shift`
+or `Win`), so they can't hijack normal typing. A single-key shortcut stops that key working in
+other apps while Snappy runs.
 
 ## How captures stay native
 

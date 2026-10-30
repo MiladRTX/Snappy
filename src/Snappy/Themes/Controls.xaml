@@ -9,6 +9,39 @@
 
     <FontFamily x:Key="Snappy.Font">Segoe UI Variable Text, Segoe UI</FontFamily>
 
+    <!--
+        The app icon as vectors, for in-app use at any size. An Image showing Assets/snappy.ico
+        gets the icon's first (16px) frame stretched up, which blurs. Same drawing as the .ico:
+        zinc tile, viewfinder corners, center dot, on a 256 grid.
+    -->
+    <DrawingImage x:Key="Snappy.Logo">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing>
+                    <GeometryDrawing.Brush>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Offset="0" Color="#3F3F46" />
+                            <GradientStop Offset="1" Color="#18181B" />
+                        </LinearGradientBrush>
+                    </GeometryDrawing.Brush>
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="0,0,256,256" RadiusX="58" RadiusY="58" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Geometry="M64,110 L64,64 110,64 M146,64 L192,64 192,110 M192,146 L192,192 146,192 M110,192 L64,192 64,146">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#FAFAFA" Thickness="22" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#FAFAFA">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="128,128" RadiusX="19" RadiusY="19" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
     <!-- Keyboard key chip, e.g. the "R" next to Region. -->
     <Style x:Key="Snappy.Kbd" TargetType="Border">
         <Setter Property="MinWidth" Value="20" />

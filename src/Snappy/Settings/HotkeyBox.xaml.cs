@@ -8,8 +8,8 @@ namespace Snappy.Settings;
 
 /// <summary>
 /// Records a global shortcut: click (or Enter), then press the keys. Esc cancels, Backspace or
-/// the clear button removes the shortcut. Shortcuts without a modifier are refused, except
-/// function keys, since a bare letter would break typing in every app.
+/// the clear button removes the shortcut. A key used for typing is refused without a modifier,
+/// since a bare letter would break typing in every app; keys like Insert or F9 work alone.
 /// </summary>
 internal partial class HotkeyBox : UserControl
 {

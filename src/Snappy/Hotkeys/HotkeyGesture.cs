@@ -11,11 +11,25 @@ public readonly record struct HotkeyGesture(ModifierKeys Modifiers, Key Key)
     public uint VirtualKey => (uint)KeyInterop.VirtualKeyFromKey(Key);
 
     /// <summary>
-    /// Whether this is safe to take over system-wide: it needs a modifier, unless it's a key
-    /// nobody types text with (F1-F24, PrintScreen, Pause). A bare "S" would break typing everywhere.
+    /// Whether this is safe to take over system-wide. With a modifier any key is; alone, the key
+    /// stops working in every other app, so it mustn't be one used for typing or moving through
+    /// text (a bare "S" would break typing everywhere). Insert, F1-F24, PrintScreen, Pause and
+    /// the like are fine alone.
     /// </summary>
-    public bool IsSuitableForGlobal =>
-        Modifiers != ModifierKeys.None || Key is >= Key.F1 and <= Key.F24 or Key.PrintScreen or Key.Pause;
+    public bool IsSuitableForGlobal => Modifiers != ModifierKeys.None || !IsTextKey(Key);
+
+    /// <summary>
+    /// Letters, digits, the number pad, punctuation, Space, Enter, Tab, Backspace, Delete, Esc,
+    /// the arrows, Home, End, Page Up/Down, Caps Lock and Num Lock.
+    /// </summary>
+    static bool IsTextKey(Key key) => key is
+        >= Key.A and <= Key.Z
+        or >= Key.D0 and <= Key.D9
+        or >= Key.NumPad0 and <= Key.Divide
+        or >= Key.OemSemicolon and <= Key.OemBackslash
+        or >= Key.PageUp and <= Key.Down
+        or Key.Space or Key.Enter or Key.Tab or Key.Back or Key.Delete or Key.Escape
+        or Key.CapsLock or Key.NumLock;
 
     public static bool TryParse(string? text, out HotkeyGesture gesture)
     {
