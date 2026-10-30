@@ -1,7 +1,13 @@
-# Snappy
+<p align="center">
+  <img src="docs/logo.png" width="128" height="128" alt="Snappy logo: two crop brackets around a lime pixel">
+</p>
 
-A Windows snipping tool that captures **true native pixels**: every screenshot is the display's real
-physical resolution, never downscaled by Windows display scaling, even on mixed-DPI multi-monitor setups.
+<h1 align="center">Snappy</h1>
+
+<p align="center">
+  A Windows snipping tool that captures <strong>true native pixels</strong>: every screenshot is the display's real
+  physical resolution, never downscaled by Windows display scaling, even on mixed-DPI multi-monitor setups.
+</p>
 
 ## Run
 
