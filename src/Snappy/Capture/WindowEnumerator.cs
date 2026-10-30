@@ -6,7 +6,8 @@ using static Snappy.Interop.NativeMethods;
 namespace Snappy.Capture;
 
 /// <summary>A top-level window and its visible bounds in physical pixels.</summary>
-public sealed record WindowInfo(nint Handle, string Title, PhysicalRect Bounds);
+/// <param name="IsCovered">Part of it was behind another window, so the screen doesn't show all of it.</param>
+public sealed record WindowInfo(nint Handle, string Title, PhysicalRect Bounds, bool IsCovered = false);
 
 public static unsafe class WindowEnumerator
 {
@@ -26,7 +27,7 @@ public static unsafe class WindowEnumerator
 
         // Snappy's own windows count too (its Settings window can be captured); the overlays
         // don't exist yet when this runs, and the toast is closed before every capture.
-        var windows = new List<WindowInfo>();
+        var windows = new List<(nint Handle, string Title, PhysicalRect Bounds)>();
         foreach (var hwnd in handles)
         {
             if (!IsWindowVisible(hwnd) || IsIconic(hwnd) || IsCloaked(hwnd)) continue;
@@ -44,7 +45,19 @@ public static unsafe class WindowEnumerator
                 bounds = bounds.Intersect(monitor.Bounds);
             if (bounds.IsEmpty) continue;
 
-            windows.Add(new WindowInfo(hwnd, title, bounds));
+            windows.Add((hwnd, title, bounds));
+        }
+        return InZOrder(windows);
+    }
+
+    /// <summary>The windows, topmost first, each marked covered if one above it overlaps it.</summary>
+    internal static IReadOnlyList<WindowInfo> InZOrder(IEnumerable<(nint Handle, string Title, PhysicalRect Bounds)> topmostFirst)
+    {
+        var windows = new List<WindowInfo>();
+        foreach (var (handle, title, bounds) in topmostFirst)
+        {
+            bool covered = windows.Any(above => !above.Bounds.Intersect(bounds).IsEmpty);
+            windows.Add(new WindowInfo(handle, title, bounds, covered));
         }
         return windows;
     }

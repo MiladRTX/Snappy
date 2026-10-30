@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 using Snappy.Capture;
 using Snappy.Geometry;
 using Snappy.Interop;
@@ -115,6 +116,37 @@ internal partial class OverlayWindow : Window
             BeginAnimation(HighlightProperty, null);
             Highlight = target;
         }
+    }
+
+    /// <summary>
+    /// Shows <paramref name="image"/>, a window rendered by itself, over the part of
+    /// <paramref name="rect"/> (the window's visible area) that lies on this display.
+    /// </summary>
+    public void ShowWindowImage(PhysicalRect rect, BitmapSource image)
+    {
+        var visible = rect.Intersect(Monitor.Bounds);
+        if (visible.IsEmpty)
+        {
+            HideWindowImage();
+            return;
+        }
+
+        var r = visible.ToDip(Monitor.Bounds.Origin, Scale);
+        Canvas.SetLeft(WindowRender, r.X);
+        Canvas.SetTop(WindowRender, r.Y);
+        WindowRender.Width = r.Width;
+        WindowRender.Height = r.Height;
+        WindowRenderBrush.ImageSource = image;
+        WindowRenderBrush.Viewbox = new Rect(visible.X - rect.X, visible.Y - rect.Y, visible.Width, visible.Height);
+        WindowRender.Visibility = Visibility.Visible;
+        WindowRender.BeginAnimation(OpacityProperty, Motion.Enter(0, 1, 120));
+    }
+
+    public void HideWindowImage()
+    {
+        WindowRender.BeginAnimation(OpacityProperty, null);
+        WindowRender.Visibility = Visibility.Collapsed;
+        WindowRenderBrush.ImageSource = null;
     }
 
     public void ShowPointer(PhysicalPoint p, PointerInfo info)

@@ -19,11 +19,16 @@ internal sealed class CaptureSession
     /// <summary>Selections smaller than this (in pixels) are treated as accidental clicks.</summary>
     const int MinimumSize = 3;
 
+    /// <summary>How long a click waits for a covered window to render before using the screen instead.</summary>
+    static readonly TimeSpan WindowRenderTimeout = TimeSpan.FromSeconds(2);
+
     readonly List<OverlayWindow> _overlays = [];
     readonly TaskCompletionSource<BitmapSource?> _result = new();
+    readonly Dictionary<nint, Task<BitmapSource?>> _windowImages = [];
     PhysicalPoint? _dragStart;
     PhysicalRect? _pressedTarget;
     PhysicalRect? _highlight;
+    WindowInfo? _hoveredWindow;
     bool _finished;
 
     CaptureSession(FrozenDesktop desktop, CaptureMode mode)
@@ -63,6 +68,7 @@ internal sealed class CaptureSession
         Mode = mode;
         _pressedTarget = null;
         SetHighlight(null, animate: false);
+        HoverWindow(null);
         foreach (var overlay in _overlays) overlay.OnModeChanged(mode);
         PointerMoved(NativeCursor.Position);
     }
@@ -76,7 +82,9 @@ internal sealed class CaptureSession
                 SetHighlight(_dragStart is { } start ? PhysicalRect.FromPoints(start, p) : null, animate: false);
                 break;
             case CaptureMode.Window:
-                SetHighlight(Desktop.WindowAt(p)?.Bounds.Intersect(Desktop.Bounds), animate: true);
+                var window = Desktop.WindowAt(p);
+                SetHighlight(window?.Bounds.Intersect(Desktop.Bounds), animate: true);
+                HoverWindow(window);
                 break;
             case CaptureMode.Screen:
                 SetHighlight(Desktop.MonitorAt(p)?.Bounds, animate: true);
@@ -121,7 +129,11 @@ internal sealed class CaptureSession
         }
         else
         {
-            if (_pressedTarget is { } target && target == _highlight) Complete(target);
+            if (_pressedTarget is { } target && target == _highlight)
+            {
+                if (Mode == CaptureMode.Window && _hoveredWindow is { } window) CompleteWindow(window);
+                else Complete(target);
+            }
             _pressedTarget = null;
         }
     }
@@ -130,7 +142,7 @@ internal sealed class CaptureSession
     public void Confirm()
     {
         if (Mode == CaptureMode.Screen) Complete(Desktop.Bounds);
-        else if (Mode == CaptureMode.Window && _highlight is { } window) Complete(window);
+        else if (Mode == CaptureMode.Window && _hoveredWindow is { } window) CompleteWindow(window);
     }
 
     public void Cancel() => Finish(null);
@@ -141,12 +153,76 @@ internal sealed class CaptureSession
         Finish(visible.IsEmpty ? null : Desktop.Crop(visible));
     }
 
+    /// <summary>
+    /// A window with something in front of it is rendered by itself, so the capture shows the
+    /// window and not what covered it. Uncovered windows come from the frozen desktop like
+    /// everything else, which is also the fallback when the window can't be rendered.
+    /// </summary>
+    async void CompleteWindow(WindowInfo window)
+    {
+        var visible = window.Bounds.Intersect(Desktop.Bounds);
+        if (!window.IsCovered || visible.IsEmpty)
+        {
+            Complete(visible);
+            return;
+        }
+        if (_finished) return;
+        _finished = true;
+        CloseOverlays();
+
+        var render = WindowImage(window);
+        var image = await Task.WhenAny(render, Task.Delay(WindowRenderTimeout)) == render ? render.Result : null;
+        _result.TrySetResult(image ?? Desktop.Crop(visible));
+    }
+
     void Finish(BitmapSource? image)
     {
         if (_finished) return;
         _finished = true;
-        foreach (var overlay in _overlays) overlay.Close();
+        CloseOverlays();
         _result.TrySetResult(image);
+    }
+
+    void CloseOverlays()
+    {
+        foreach (var overlay in _overlays) overlay.Close();
+    }
+
+    /// <summary>In Window mode, shows a covered window rendered by itself, the way it will be captured.</summary>
+    async void HoverWindow(WindowInfo? window)
+    {
+        if (window == _hoveredWindow) return;
+        _hoveredWindow = window;
+        foreach (var overlay in _overlays) overlay.HideWindowImage();
+        if (window is not { IsCovered: true }) return;
+
+        var image = await WindowImage(window);
+        if (_finished || window != _hoveredWindow || image is null) return;
+        var visible = window.Bounds.Intersect(Desktop.Bounds);
+        foreach (var overlay in _overlays) overlay.ShowWindowImage(visible, image);
+    }
+
+    /// <summary>The window's visible part rendered by itself, made once per capture on a worker thread.</summary>
+    Task<BitmapSource?> WindowImage(WindowInfo window)
+    {
+        if (_windowImages.TryGetValue(window.Handle, out var render)) return render;
+
+        var visible = window.Bounds.Intersect(Desktop.Bounds);
+        var center = new PhysicalPoint(visible.X + visible.Width / 2, visible.Y + visible.Height / 2);
+        double scale = Desktop.MonitorAt(center)?.Scale ?? 1;
+        render = Task.Run(() =>
+        {
+            try
+            {
+                return WindowCapturer.TryCapture(window.Handle, visible, scale);
+            }
+            catch (Exception)
+            {
+                return null; // the window closed meanwhile, or Windows refused; the screen still works
+            }
+        });
+        _windowImages[window.Handle] = render;
+        return render;
     }
 
     void SetHighlight(PhysicalRect? rect, bool animate)

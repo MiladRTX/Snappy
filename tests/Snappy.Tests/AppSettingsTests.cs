@@ -9,11 +9,11 @@ public sealed class AppSettingsTests : IDisposable
     readonly string _folder = Path.Combine(Path.GetTempPath(), "SnappyTests", Guid.NewGuid().ToString("N"));
 
     [Fact]
-    public void Defaults_save_and_copy_with_ctrl_shift_s()
+    public void Defaults_save_and_copy_with_insert()
     {
         var settings = new AppSettings();
 
-        Assert.Equal("Ctrl+Shift+S", settings.Hotkey);
+        Assert.Equal("Insert", settings.Hotkey);
         Assert.True(settings.SaveToFile);
         Assert.True(settings.CopyToClipboard);
         Assert.True(settings.ShowNotification);
@@ -51,7 +51,7 @@ public sealed class AppSettingsTests : IDisposable
     {
         Assert.Equal("", AppSettings.Parse("""{ "hotkey": "" }""").Hotkey);
         Assert.Equal("", AppSettings.Parse("""{ "hotkey": null }""").Hotkey);
-        Assert.Equal("Ctrl+Shift+S", AppSettings.Parse("{}").Hotkey);
+        Assert.Equal("Insert", AppSettings.Parse("{}").Hotkey);
     }
 
     [Fact]
@@ -59,7 +59,7 @@ public sealed class AppSettingsTests : IDisposable
     {
         var settings = new AppSettings();
 
-        Assert.Equal("Ctrl+Shift+S", settings.HotkeyFor(HotkeyAction.CaptureRegion));
+        Assert.Equal("Insert", settings.HotkeyFor(HotkeyAction.CaptureRegion));
         Assert.Equal("", settings.HotkeyFor(HotkeyAction.CaptureWindow));
         Assert.Equal("", settings.HotkeyFor(HotkeyAction.CaptureScreen));
         Assert.Equal("", settings.HotkeyFor(HotkeyAction.CaptureAllDisplays));
@@ -111,8 +111,8 @@ public sealed class AppSettingsTests : IDisposable
 
         Assert.Null(error);
         Assert.True(File.Exists(path));
-        Assert.Contains("\"hotkey\": \"Ctrl+Shift+S\"", File.ReadAllText(path));
-        Assert.Equal("Ctrl+Shift+S", settings.Hotkey);
+        Assert.Contains("\"hotkey\": \"Insert\"", File.ReadAllText(path));
+        Assert.Equal("Insert", settings.Hotkey);
     }
 
     [Fact]
@@ -125,7 +125,7 @@ public sealed class AppSettingsTests : IDisposable
         var settings = AppSettings.Load(path, out var error);
 
         Assert.NotNull(error);
-        Assert.Equal("Ctrl+Shift+S", settings.Hotkey);
+        Assert.Equal("Insert", settings.Hotkey);
     }
 
     [Fact]

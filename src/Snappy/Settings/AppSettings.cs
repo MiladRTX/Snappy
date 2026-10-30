@@ -21,8 +21,8 @@ public sealed class AppSettings
 
     static readonly string[] Themes = ["System", "Light", "Dark"];
 
-    /// <summary>Global shortcut for a region capture, e.g. "Ctrl+Shift+S". Empty turns it off.</summary>
-    public string Hotkey { get; set; } = "Ctrl+Shift+S";
+    /// <summary>Global shortcut for a region capture, e.g. "Insert" (the default) or "Ctrl+Alt+S". Empty turns it off.</summary>
+    public string Hotkey { get; set; } = "Insert";
 
     /// <summary>Global shortcut for a window capture. Off (empty) unless set.</summary>
     public string WindowHotkey { get; set; } = "";

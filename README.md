@@ -17,7 +17,7 @@ dotnet run --project src/Snappy
 
 Snappy lives in the notification area. Start a capture by:
 
-- pressing a shortcut (region capture is `Ctrl+Shift+S` by default; see Settings),
+- pressing a shortcut (region capture is `Insert` by default; see Settings),
 - left-clicking the tray icon, or using its right-click menu, or
 - running `Snappy.exe --capture` (handy for other launchers and macro keys).
 
@@ -30,7 +30,7 @@ The screen freezes and dims; the toolbar at the top switches modes.
 | Key | Action |
 | --- | --- |
 | `R` | Region: drag a rectangle (the magnifier shows exact pixels and colors) |
-| `W` | Window: click a window (captures its visible frame, without invisible borders) |
+| `W` | Window: click a window (captures its visible frame, without invisible borders; a window partly behind others is captured by itself, without what covers it) |
 | `F` | Screen: click a display |
 | `Enter` | In Screen mode: all displays; in Window mode: the hovered window |
 | `Esc` / right-click | Cancel |
@@ -54,7 +54,7 @@ picks up changes as soon as the file is saved.
 
 | Setting | Default | |
 | --- | --- | --- |
-| `hotkey` | `Ctrl+Shift+S` | region capture; e.g. `Ctrl+Alt+S`, `Ctrl+PrintScreen`, `Win+F9`; `""` turns it off |
+| `hotkey` | `Insert` | region capture; e.g. `Ctrl+Alt+S`, `Ctrl+PrintScreen`, `F9`, `Win+F9`; `""` turns it off |
 | `windowHotkey` | `""` (off) | window capture |
 | `screenHotkey` | `""` (off) | display capture |
 | `allDisplaysHotkey` | `""` (off) | all displays at once, no overlay |

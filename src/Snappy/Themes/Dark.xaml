@@ -34,16 +34,10 @@
     <SolidColorBrush x:Key="Snappy.ItemHover" Color="#1AFFFFFF" />
     <SolidColorBrush x:Key="Snappy.ItemPressed" Color="#26FFFFFF" />
 
-    <!-- Active segment: a raised key, lighter than the surface around it. -->
-    <LinearGradientBrush x:Key="Snappy.SegmentActive" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#33FFFFFF" />
-        <GradientStop Offset="1" Color="#1AFFFFFF" />
-    </LinearGradientBrush>
-    <LinearGradientBrush x:Key="Snappy.SegmentActiveEdge" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#66FFFFFF" />
-        <GradientStop Offset="1" Color="#14FFFFFF" />
-    </LinearGradientBrush>
-    <SolidColorBrush x:Key="Snappy.SegmentHover" Color="#12FFFFFF" />
+    <!-- Active segment: a flat zinc tile, the same as the toast's icon badge (Muted). -->
+    <SolidColorBrush x:Key="Snappy.SegmentActive" Color="#27272A" />
+    <SolidColorBrush x:Key="Snappy.SegmentActiveEdge" Color="Transparent" />
+    <SolidColorBrush x:Key="Snappy.SegmentHover" Color="#0DFFFFFF" />
 
     <SolidColorBrush x:Key="Snappy.KbdBackground" Color="#1AFFFFFF" />
     <SolidColorBrush x:Key="Snappy.KbdBorder" Color="#29FFFFFF" />
