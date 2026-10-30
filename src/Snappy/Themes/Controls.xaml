@@ -10,32 +10,63 @@
     <FontFamily x:Key="Snappy.Font">Segoe UI Variable Text, Segoe UI</FontFamily>
 
     <!--
-        The app icon as vectors, for in-app use at any size. An Image showing Assets/snappy.ico
-        gets the icon's first (16px) frame stretched up, which blurs. Same drawing as the .ico:
-        zinc tile, viewfinder corners, center dot, on a 256 grid.
+        The app icon as vectors, on a 256 grid: two crop brackets snapping shut on one lime pixel,
+        on a near-black tile. In-app images use this directly (an Image showing Assets/snappy.ico
+        gets its 16px frame stretched up, which blurs), and the .ico's frames are rendered from it.
     -->
     <DrawingImage x:Key="Snappy.Logo">
         <DrawingImage.Drawing>
             <DrawingGroup>
+                <!-- Tile, with a faint rim so it still reads on dark backgrounds. -->
                 <GeometryDrawing>
                     <GeometryDrawing.Brush>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Offset="0" Color="#3F3F46" />
-                            <GradientStop Offset="1" Color="#18181B" />
+                            <GradientStop Offset="0" Color="#25242A" />
+                            <GradientStop Offset="0.15" Color="#141417" />
+                            <GradientStop Offset="0.55" Color="#0B0B0D" />
+                            <GradientStop Offset="1" Color="#050507" />
                         </LinearGradientBrush>
                     </GeometryDrawing.Brush>
+                    <GeometryDrawing.Pen>
+                        <Pen Thickness="2">
+                            <Pen.Brush>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <GradientStop Offset="0" Color="#2EFFFFFF" />
+                                    <GradientStop Offset="0.5" Color="#0DFFFFFF" />
+                                    <GradientStop Offset="1" Color="#05FFFFFF" />
+                                </LinearGradientBrush>
+                            </Pen.Brush>
+                        </Pen>
+                    </GeometryDrawing.Pen>
                     <GeometryDrawing.Geometry>
-                        <RectangleGeometry Rect="0,0,256,256" RadiusX="58" RadiusY="58" />
+                        <RectangleGeometry Rect="1,1,254,254" RadiusX="57" RadiusY="57" />
                     </GeometryDrawing.Geometry>
                 </GeometryDrawing>
-                <GeometryDrawing Geometry="M64,110 L64,64 110,64 M146,64 L192,64 192,110 M192,146 L192,192 146,192 M110,192 L64,192 64,146">
+                <!-- Glow around the pixel; the .ico leaves it out at small sizes, where it would only blur. -->
+                <GeometryDrawing>
+                    <GeometryDrawing.Brush>
+                        <RadialGradientBrush>
+                            <GradientStop Offset="0.45" Color="#A6C7F83F" />
+                            <GradientStop Offset="0.6" Color="#5CC7F83F" />
+                            <GradientStop Offset="0.75" Color="#24C7F83F" />
+                            <GradientStop Offset="0.88" Color="#0AC7F83F" />
+                            <GradientStop Offset="1" Color="#00C7F83F" />
+                        </RadialGradientBrush>
+                    </GeometryDrawing.Brush>
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="128,128" RadiusX="38" RadiusY="38" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <!-- Brackets: top-left and bottom-right, mirror images through the center. -->
+                <GeometryDrawing Geometry="M58,122 L58,81 A23,23 0 0 1 81,58 L139,58 M198,134 L198,175 A23,23 0 0 1 175,198 L117,198">
                     <GeometryDrawing.Pen>
-                        <Pen Brush="#FAFAFA" Thickness="22" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                        <Pen Brush="#FAFAFA" Thickness="26" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
                     </GeometryDrawing.Pen>
                 </GeometryDrawing>
-                <GeometryDrawing Brush="#FAFAFA">
+                <!-- The pixel. -->
+                <GeometryDrawing Brush="#C7F83F">
                     <GeometryDrawing.Geometry>
-                        <EllipseGeometry Center="128,128" RadiusX="19" RadiusY="19" />
+                        <RectangleGeometry Rect="111,111,34,34" RadiusX="5" RadiusY="5" />
                     </GeometryDrawing.Geometry>
                 </GeometryDrawing>
             </DrawingGroup>
