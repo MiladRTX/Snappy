@@ -9,11 +9,20 @@
   physical resolution, never downscaled by Windows display scaling, even on mixed-DPI multi-monitor setups.
 </p>
 
-## Run
+## Download
+
+Get **`Snappy.exe`** from the [latest release](https://github.com/MiladRTX/Snappy/releases/latest) and run it.
+It's one file with everything included, so there's nothing to install (no .NET needed), for 64-bit
+Windows 10 and 11. Snappy isn't code-signed yet, so Windows SmartScreen may warn the first time:
+choose **More info**, then **Run anyway**.
+
+To run from source instead (needs the .NET 10 SDK):
 
 ```bash
 dotnet run --project src/Snappy
 ```
+
+## Use
 
 Snappy lives in the notification area. Start a capture by:
 
